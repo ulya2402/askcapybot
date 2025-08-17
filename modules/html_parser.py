@@ -11,12 +11,25 @@ def escape_html(text: str) -> str:
         return ""
     return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
+def convert_markdown_code_to_html(text: str) -> str:
+    """Finds Markdown-style code blocks and converts them to HTML <pre><code>."""
+    def replacer(match):
+        lang = match.group(1) or ""
+        code = escape_html(match.group(2).strip())
+        if lang:
+            return f'<pre><code class="language-{lang}">{code}</code></pre>'
+        else:
+            return f'<pre>{code}</pre>'
+
+    # Regex to find ```code``` or ```python...```
+    pattern = re.compile(r'```(\w+)?\n(.*?)\n```', re.DOTALL)
+    return pattern.sub(replacer, text)
+
 def sanitize_html_v2(html_content: str) -> str:
     if not html_content:
         return ""
 
     soup = BeautifulSoup(html_content, 'html.parser')
-
     target_node = soup.body if soup.body else soup
 
     for tag in list(target_node.find_all(True)):
@@ -47,29 +60,27 @@ def truncate_html(html_string: str, limit: int = 3800) -> str:
     truncated = html_string[:limit]
     
     open_tags = []
-    # Find all tags in the truncated string
     for tag_match in re.finditer(r"<(/)?([a-zA-Z0-9_-]+)[^>]*>", truncated):
         is_closing, tag_name = tag_match.groups()
         tag_name = tag_name.lower()
         if is_closing:
             if open_tags and open_tags[-1] == tag_name:
                 open_tags.pop()
-        # Exclude self-closing tags
         elif not tag_match.group(0).endswith("/>"):
             open_tags.append(tag_name)
     
-    # Find the last complete tag to avoid cutting in the middle of a tag
     end_pos = truncated.rfind('<')
     if end_pos > truncated.rfind('>'):
         truncated = truncated[:end_pos]
 
-    # Close any remaining open tags
     for tag in reversed(open_tags):
         truncated += f"</{tag}>"
 
     return truncated + "\n..."
 
 def process_telegram_html(text: str) -> str:
-    sanitized = sanitize_html_v2(text)
+    """Runs the full sanitization and truncation process."""
+    converted = convert_markdown_code_to_html(text)
+    sanitized = sanitize_html_v2(converted)
     truncated = truncate_html(sanitized)
     return truncated
