@@ -1,0 +1,21 @@
+{
+    "start_message": "Halo, {username}! Saya adalah bot yang didukung oleh Groq. Gunakan /newchat untuk memulai percakapan baru. Gunakan /lang untuk mengubah bahasa.",
+    "newchat_success": "Riwayat percakapan Anda telah dihapus. Mari mulai obrolan baru!",
+    "newchat_fail": "Maaf, saya tidak dapat menghapus riwayat Anda saat ini. Silakan coba lagi.",
+    "thinking": "Sedang berpikir...",
+    "no_response": "Maaf, saya tidak dapat menghasilkan respons.",
+    "stream_error": "Terjadi kesalahan saat streaming respons.",
+    "lang_select": "Silakan pilih bahasa Anda:",
+    "lang_updated_en": "Bahasa telah diperbarui ke Bahasa Inggris.",
+    "lang_updated_id": "Bahasa telah diperbarui ke Bahasa Indonesia.",
+    "system_prompt": "You are a helpful assistant. Your response must be concise and formatted using only Telegram-supported HTML tags: <b>, <i>, <u>, <s>, <code>, <pre>, <blockquote>, <a href='...'>. Do not use any other tags like <html>, <body>, or <!doctype>.",
+    "api_key_not_configured": "Kunci API untuk Groq tidak dikonfigurasi. Silakan hubungi administrator.",
+    "all_services_busy": "Maaf, semua layanan kami sedang sibuk saat ini. Silakan coba lagi sebentar lagi.",
+    "settings_menu": "⚙️ Menu Pengaturan",
+  "change_model_button": "🤖 Ganti Model",
+  "select_model": "Silakan pilih model:",
+  "model_updated": "Model AI telah diperbarui ke: {model_name}",
+  "show_reasoning_button": "🤔 Show Reasoning",
+  "reasoning_title": "\n\nAI Reasoning\n"
+  }
+  

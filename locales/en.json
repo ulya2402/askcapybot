@@ -1,0 +1,21 @@
+{
+    "start_message": "Hello, {username}! I'm a bot powered by Groq. Use /newchat to start a fresh conversation. Use /lang to change the language.",
+    "newchat_success": "Your conversation history has been cleared. Let's start a new chat!",
+    "newchat_fail": "Sorry, I couldn't clear your history at the moment. Please try again.",
+    "thinking": "Thinking...",
+    "no_response": "Sorry, I couldn't generate a response.",
+    "stream_error": "An error occurred while streaming the response.",
+    "lang_select": "Please select your language:",
+    "lang_updated_en": "Language has been updated to English.",
+    "lang_updated_id": "Language has been updated to Indonesian.",
+    "system_prompt": "You are a helpful assistant. Your response must be concise and formatted using only Telegram-supported HTML tags: <b>, <i>, <u>, <s>, <code>, <pre>, <blockquote>, <a href='...'>. Do not use any other tags like <html>, <body>, or <!doctype>.",
+    "api_key_not_configured": "API key for Groq is not configured. Please contact the administrator.",
+    "all_services_busy": "Sorry, all our services are currently busy. Please try again in a moment.",
+    "settings_menu": "⚙️ Settings Menu",
+  "change_model_button": "🤖 Change Model",
+  "select_model": "Please select a model:",
+  "model_updated": "AI model updated to: {model_name}",
+  "show_reasoning_button": "🤔 Show Reasoning",
+  "reasoning_title": "\n\nAI Reasoning\n"
+  }
+  

@@ -1,0 +1,35 @@
+[
+    {
+      "name": "Deepseek r1 🧠",
+      "value": "deepseek-r1-distill-llama-70b",
+      "provider": "Deepseek",
+      "reasoning": true
+    },
+    {
+      "name": "Qwen 3 🧠",
+      "value": "qwen/qwen3-32b",
+      "provider": "Alibaba Cloud",
+      "reasoning": true
+    },
+    {
+      "name": "Llama 4 maverick",
+      "value": "meta-llama/llama-4-maverick-17b-128e-instruct",
+      "provider": "Meta"
+    },
+    {
+      "name": "GPT OSS 120B",
+      "value": "openai/gpt-oss-120b",
+      "provider": "OpenAI"
+    },
+    {
+        "name": "Kimi K2",
+        "value": "moonshotai/kimi-k2-instruct",
+        "provider": "Moonshot AI"
+    },
+    {
+      "name": "Llama 3.3",
+      "value": "llama-3.3-70b-versatile",
+      "provider": "Meta"
+    }
+  ]
+  
