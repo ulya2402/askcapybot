@@ -11,8 +11,21 @@ def escape_html(text: str) -> str:
         return ""
     return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
+def convert_common_markdown_to_html(text: str) -> str:
+    if not text:
+        return ""
+    
+    # Bold: **text** -> <b>text</b>
+    text = re.sub(r'\*\*(?=\S)(.*?)(?<=\S)\*\*', r'<b>\1</b>', text)
+    # Italic: *text* or _text_ -> <i>text</i>
+    text = re.sub(r'\*(?=\S)(.*?)(?<=\S)\*', r'<i>\1</i>', text)
+    text = re.sub(r'_(?=\S)(.*?)(?<=\S)_', r'<i>\1</i>', text)
+    # Strikethrough: ~~text~~ -> <s>text</s>
+    text = re.sub(r'~~(?=\S)(.*?)(?<=\S)~~', r'<s>\1</s>', text)
+    
+    return text
+
 def convert_markdown_code_to_html(text: str) -> str:
-    """Finds Markdown-style code blocks and converts them to HTML <pre><code>."""
     def replacer(match):
         lang = match.group(1) or ""
         code = escape_html(match.group(2).strip())
@@ -21,7 +34,6 @@ def convert_markdown_code_to_html(text: str) -> str:
         else:
             return f'<pre>{code}</pre>'
 
-    # Regex to find ```code``` or ```python...```
     pattern = re.compile(r'```(\w+)?\n(.*?)\n```', re.DOTALL)
     return pattern.sub(replacer, text)
 
@@ -53,34 +65,10 @@ def sanitize_html_v2(html_content: str) -> str:
     else:
         return str(target_node)
 
-def truncate_html(html_string: str, limit: int = 3800) -> str:
-    if len(html_string) <= limit:
-        return html_string
-
-    truncated = html_string[:limit]
-    
-    open_tags = []
-    for tag_match in re.finditer(r"<(/)?([a-zA-Z0-9_-]+)[^>]*>", truncated):
-        is_closing, tag_name = tag_match.groups()
-        tag_name = tag_name.lower()
-        if is_closing:
-            if open_tags and open_tags[-1] == tag_name:
-                open_tags.pop()
-        elif not tag_match.group(0).endswith("/>"):
-            open_tags.append(tag_name)
-    
-    end_pos = truncated.rfind('<')
-    if end_pos > truncated.rfind('>'):
-        truncated = truncated[:end_pos]
-
-    for tag in reversed(open_tags):
-        truncated += f"</{tag}>"
-
-    return truncated + "\n..."
-
 def process_telegram_html(text: str) -> str:
-    """Runs the full sanitization and truncation process."""
-    converted = convert_markdown_code_to_html(text)
-    sanitized = sanitize_html_v2(converted)
-    truncated = truncate_html(sanitized)
-    return truncated
+    if not text:
+        return ""
+    markdown_converted = convert_common_markdown_to_html(text)
+    code_converted = convert_markdown_code_to_html(markdown_converted)
+    sanitized = sanitize_html_v2(code_converted)
+    return sanitized
