@@ -20,7 +20,8 @@
   "limit_reached": "You have reached your daily chat limit of {limit} messages. Please try again tomorrow.",
   "status_message": "<b>📊 Your Status</b>\n\n<b>User ID:</b> <code>{user_id}</code>\n<b>Today's Usage:</b> {usage}/{limit}\n<b>Resets in:</b> {hours} hours {minutes} minutes",
   "thinking_vision": "👁️ Analyzing image...",
-    "default_vision_prompt": "What's in this image? Describe it in detail."
+    "default_vision_prompt": "What's in this image? Describe it in detail.",
+"max_images_warning": "You sent more than {max_images} images. Only the first {max_images} will be analyzed."
 
   }
   
