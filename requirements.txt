@@ -3,4 +3,5 @@ groq==0.31.0
 supabase==2.5.1
 python-dotenv==1.0.1
 beautifulsoup4
+pytz
 

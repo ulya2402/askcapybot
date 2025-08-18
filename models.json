@@ -17,6 +17,11 @@
       "provider": "Meta"
     },
     {
+      "name": "Llama 4 Scout",
+      "value": "meta-llama/llama-4-scout-17b-16e-instruct",
+      "provider": "Meta"
+    },
+    {
       "name": "GPT OSS 120B",
       "value": "openai/gpt-oss-120b",
       "provider": "OpenAI"

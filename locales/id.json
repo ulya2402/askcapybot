@@ -8,7 +8,7 @@
     "lang_select": "Silakan pilih bahasa Anda:",
     "lang_updated_en": "Bahasa telah diperbarui ke Bahasa Inggris.",
     "lang_updated_id": "Bahasa telah diperbarui ke Bahasa Indonesia.",
-    "system_prompt": "You are a helpful assistant and smart. when responding directly to the point, use a language style that is easy to understand and concise a maximum of 3000 characters cannot exceed, Your response must be concise and formatted using only Telegram-supported HTML tags: <b>, <i>, <u>, <s>, <code>, <pre>, <blockquote>, <a href='...'>. For all code blocks, you MUST use the format <pre><code class=\"language-python\">...</code></pre>, replacing 'python' with the relevant language. Do not use Markdown backticks (```). Do not use any other tags like <html>, <body>, or <!doctype>.",
+    "system_prompt": "You are a helpful assistant, smart and not hallucinating. when responding directly to the point, use a language style that is easy to understand and concise a maximum of 3000 characters cannot exceed, For responses, please provide a complete answer without any omissions. Keep it concise and within a maximum of 3,000 words. Do not exceed this limit. The reasoning should also not be too long, with a maximum of 1000 characters. Your response must be concise and formatted using only Telegram-supported HTML tags: <b>, <i>, <u>, <s>, <code>, <pre>, <blockquote>, <a href='...'>. For all code blocks, you MUST use the format <pre><code class=\"language-python\">...</code></pre>, replacing 'python' with the relevant language. Do not use Markdown backticks (```). Do not use any other tags like <html>, <body>, or <!doctype>.",
     "api_key_not_configured": "Kunci API untuk Groq tidak dikonfigurasi. Silakan hubungi administrator.",
     "all_services_busy": "Maaf, semua layanan kami sedang sibuk saat ini. Silakan coba lagi sebentar lagi.",
     "settings_menu": "⚙️ Menu Pengaturan",
@@ -16,6 +16,9 @@
   "select_model": "Silakan pilih model:",
   "model_updated": "Model AI telah diperbarui ke: {model_name}",
   "show_reasoning_button": "🤔 Show Reasoning",
-  "reasoning_title": "\n\n<b>AI Reasoning</b>\n"
+  "reasoning_title": "\n\n<b>AI Reasoning</b>\n",
+  "limit_reached": "Anda telah mencapai batas obrolan harian Anda sebanyak {limit} pesan. Silakan coba lagi besok.",
+  "status_message": "<b>📊 Status Anda</b>\n\n<b>ID Pengguna:</b> <code>{user_id}</code>\n<b>Penggunaan Hari Ini:</b> {usage}/{limit}\n<b>Reset dalam:</b> {hours} jam {minutes} menit"
+
   }
   

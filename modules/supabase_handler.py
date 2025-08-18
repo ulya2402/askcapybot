@@ -1,4 +1,5 @@
 import os
+from datetime import date
 from supabase import create_client, Client
 from dotenv import load_dotenv
 
@@ -20,7 +21,9 @@ async def get_or_create_user(supabase: Client, user_id: int, username: str):
                 'id': user_id,
                 'username': username,
                 'language_code': 'en',
-                'active_model': 'llama3-8b-8192'
+                'active_model': 'llama3-8b-8192',
+                'chat_count': 0,
+                'last_chat_date': str(date.today())
             }
             supabase.table('users').insert(user_data).execute()
             print(f"New user created: {username} ({user_id})")
@@ -29,6 +32,7 @@ async def get_or_create_user(supabase: Client, user_id: int, username: str):
         print(f"Error in get_or_create_user: {e}")
         return None
 
+# ... (fungsi-fungsi lain tetap sama) ...
 async def get_user_messages(supabase: Client, user_id: int):
     try:
         response = supabase.table('messages').select('role, content').eq('user_id', user_id).order('created_at', desc=False).execute()
@@ -46,7 +50,6 @@ async def save_message(supabase: Client, user_id: int, role: str, content: str, 
             'reasoning_text': reasoning
         }
         response = supabase.table('messages').insert(message_data).execute()
-        # Return the ID of the newly created message
         if response.data:
             return response.data[0]['id']
     except Exception as e:
@@ -106,3 +109,28 @@ async def update_user_model(supabase: Client, user_id: int, model_value: str):
     except Exception as e:
         print(f"Error updating model for user {user_id}: {e}")
         return False
+
+# --- FUNGSI BARU UNTUK LIMIT ---
+async def get_user_chat_info(supabase: Client, user_id: int):
+    try:
+        response = supabase.table('users').select('chat_count, last_chat_date').eq('id', user_id).single().execute()
+        return response.data
+    except Exception as e:
+        print(f"Error fetching chat info for user {user_id}: {e}")
+        return None
+
+async def reset_user_chat_count(supabase: Client, user_id: int, today_date: date):
+    try:
+        supabase.table('users').update({'chat_count': 0, 'last_chat_date': str(today_date)}).eq('id', user_id).execute()
+    except Exception as e:
+        print(f"Error resetting chat count for user {user_id}: {e}")
+
+async def increment_user_chat_count(supabase: Client, user_id: int):
+    try:
+        response = supabase.table('users').select('chat_count').eq('id', user_id).single().execute()
+        if response.data:
+            current_count = response.data.get('chat_count', 0)
+            new_count = current_count + 1
+            supabase.table('users').update({'chat_count': new_count}).eq('id', user_id).execute()
+    except Exception as e:
+        print(f"Error incrementing chat count for user {user_id}: {e}")
