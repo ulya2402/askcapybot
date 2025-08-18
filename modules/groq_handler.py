@@ -81,3 +81,43 @@ async def get_groq_response(user_id: int, user_message: str, supabase_client, tr
             continue
     
     return {"content": translator.get_text("all_services_busy", lang_code), "reasoning": None}
+
+async def get_groq_vision_response(user_id: int, prompt_text: str, base64_images: list, supabase_client, translator: Translator, lang_code: str):
+    if not api_keys:
+        print("Error: GROQ_API_KEYS not found or is empty in .env file.")
+        return {"content": translator.get_text("api_key_not_configured", lang_code)}
+
+    active_model_id = await get_user_model(supabase_client, user_id)
+    
+    content_parts = [{"type": "text", "text": prompt_text}]
+    for b64_img in base64_images:
+        content_parts.append({
+            "type": "image_url",
+            "image_url": {"url": f"data:image/jpeg;base64,{b64_img}"}
+        })
+
+    messages = [{"role": "user", "content": content_parts}]
+    
+    api_params = {
+        "temperature": 0.5,
+        "max_tokens": 4096,
+        "top_p": 1,
+        "stop": None,
+        "stream": False,
+    }
+
+    for _ in range(len(api_keys)):
+        current_key = next(key_cycler)
+        client = AsyncGroq(api_key=current_key)
+        
+        try:
+            completion = await client.chat.completions.create(messages=messages, model=active_model_id, **api_params)
+            return {"content": completion.choices[0].message.content}
+        except RateLimitError:
+            print(f"Rate limit exceeded for key ending in ...{current_key[-4:]}. Rotating key.")
+            continue
+        except Exception as e:
+            print(f"An unexpected error occurred with key ...{current_key[-4:]}: {e}")
+            return {"content": translator.get_text("stream_error", lang_code)}
+            
+    return {"content": translator.get_text("all_services_busy", lang_code)}

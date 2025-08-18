@@ -10,7 +10,8 @@ from aiogram.types import TelegramObject
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
 
-from modules.bot_handlers import router
+from modules.bot_handlers import router as main_router
+from modules.vision_handler import router as vision_router
 from modules.supabase_handler import init_supabase_client, get_user_language
 from modules.translator import translator_instance
 
@@ -50,7 +51,8 @@ async def main():
     
     dp.update.middleware(LanguageMiddleware())
     
-    dp.include_router(router)
+    dp.include_router(main_router)
+    dp.include_router(vision_router)
 
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot, supabase=supabase_client)

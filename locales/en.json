@@ -18,7 +18,9 @@
   "show_reasoning_button": "🤔 Show Reasoning",
   "reasoning_title": "\n\n<b>AI Reasoning</b>\n\n",
   "limit_reached": "You have reached your daily chat limit of {limit} messages. Please try again tomorrow.",
-  "status_message": "<b>📊 Your Status</b>\n\n<b>User ID:</b> <code>{user_id}</code>\n<b>Today's Usage:</b> {usage}/{limit}\n<b>Resets in:</b> {hours} hours {minutes} minutes"
+  "status_message": "<b>📊 Your Status</b>\n\n<b>User ID:</b> <code>{user_id}</code>\n<b>Today's Usage:</b> {usage}/{limit}\n<b>Resets in:</b> {hours} hours {minutes} minutes",
+  "thinking_vision": "👁️ Analyzing image...",
+    "default_vision_prompt": "What's in this image? Describe it in detail."
 
   }
   
