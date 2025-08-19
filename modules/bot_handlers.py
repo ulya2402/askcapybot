@@ -264,3 +264,15 @@ async def handle_group_text_command(message: Message, command: CommandObject, su
         await process_text_message(message, command.args, supabase, translator, lang_code)
     else:
         await message.reply(translator.get_text("group_command_usage", lang_code))
+
+@router.callback_query(F.data.startswith("check_membership"))
+async def handle_check_membership_callback(callback: CallbackQuery, supabase: Client, translator: Translator, lang_code: str):
+    """
+    Handles the 'Coba Lagi' button after a user joins the required channels.
+    """
+    await callback.answer("Terima kasih! Sedang memeriksa ulang keanggotaan Anda...")
+    # Hapus pesan "wajib gabung" agar chat bersih
+    await callback.message.delete()
+    
+    # Panggil kembali fungsi /start untuk menampilkan menu utama
+    await handle_start(callback.message, supabase, translator, lang_code)

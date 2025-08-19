@@ -17,6 +17,8 @@ from modules.supabase_handler import init_supabase_client, get_user_language
 from modules.translator import translator_instance
 from modules.group_handler import router as group_router # <-- PERUBAHAN: Impor baru
 from modules.inline_handler import router as inline_router
+from modules.membership_middleware import MembershipMiddleware # <-- PERUBAHAN 1: Impor baru
+
 
 
 
@@ -56,11 +58,18 @@ async def main():
     bot = Bot(token=bot_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp = Dispatcher(storage=storage)
     
-    dp.update.middleware(LanguageMiddleware())
+    membership_checker = MembershipMiddleware()
+    dp.message.outer_middleware.register(membership_checker)
+    dp.callback_query.outer_middleware.register(membership_checker)
+
+
+    dp.update.middleware.register(LanguageMiddleware())
     
     dp.include_router(main_router)
     dp.include_router(vision_router)
     dp.include_router(inline_router)
+    dp.include_router(group_router) 
+
 
 
 

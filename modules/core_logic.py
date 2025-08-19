@@ -71,7 +71,7 @@ async def process_text_message(message: Message, text_prompt: str, supabase: Cli
 
         if final_text and final_text.strip():
             # We need the original full response for saving, not the parsed one
-            message_id = await save_message(supabase, user_id, 'assistant', original_full_response['content'], reasoning_text)
+            message_id = await save_message(supabase, user_id, 'assistant', original_content, reasoning_text)
             
             reply_markup = None
             if reasoning_text and message_id:
