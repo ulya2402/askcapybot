@@ -1,7 +1,4 @@
 import os
-import asyncio
-import json
-import re
 from datetime import datetime, timedelta
 import pytz
 
@@ -9,98 +6,23 @@ from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup
 from aiogram.filters import CommandStart, Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram.enums import ParseMode
-from aiogram.exceptions import TelegramBadRequest
 from supabase import Client
 
 from modules.supabase_handler import (
-    get_or_create_user, save_message, delete_user_messages,
+    get_or_create_user, delete_user_messages,
     update_user_language, update_user_model, get_reasoning_text,
     get_user_chat_info, get_user_model
 )
-from modules.groq_handler import get_groq_response
 from modules.translator import Translator
 from modules.html_parser import process_telegram_html, escape_html
-from modules.limit_handler import check_and_handle_limit, increment_chat_count
+from modules.core_logic import process_text_message
+from modules.utils import send_long_message, load_models
+from modules.limit_handler import check_and_handle_limit 
+from aiogram.filters import CommandObject
+
 
 
 router = Router()
-
-def load_models():
-    try:
-        with open("models.json", "r") as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return []
-
-async def send_long_message(message: Message, text: str, parse_mode: str = ParseMode.HTML, reply_markup: InlineKeyboardMarkup = None):
-    MAX_LENGTH = 4096
-    if len(text) <= MAX_LENGTH:
-        try:
-            if message.from_user.id == message.chat.id: # Private chat
-                 await message.answer(text, parse_mode=parse_mode, reply_markup=reply_markup, disable_web_page_preview=True)
-            else: # Group chat
-                 await message.reply(text, parse_mode=parse_mode, reply_markup=reply_markup, disable_web_page_preview=True)
-        except TelegramBadRequest:
-            await message.reply(escape_html(text), parse_mode=None, reply_markup=reply_markup, disable_web_page_preview=True)
-        return
-
-    parts = []
-    open_tags = []
-    
-    while len(text) > 0:
-        if len(text) <= MAX_LENGTH:
-            parts.append(text)
-            break
-
-        part = text[:MAX_LENGTH]
-        
-        last_newline = part.rfind('\n')
-        split_pos = last_newline if last_newline != -1 else MAX_LENGTH
-        
-        part_to_send = text[:split_pos]
-        
-        for tag_match in re.finditer(r"<(/)?([a-zA-Z0-9_-]+)[^>]*>", part_to_send):
-            is_closing, tag_name = tag_match.groups()
-            tag_name = tag_name.lower()
-            if is_closing:
-                if open_tags and open_tags[-1] == tag_name:
-                    open_tags.pop()
-            elif not tag_match.group(0).endswith("/>"):
-                open_tags.append(tag_name)
-        
-        closing_tags = ""
-        if open_tags:
-            for tag in reversed(open_tags):
-                closing_tags += f"</{tag}>"
-        
-        part_to_send += closing_tags
-        parts.append(part_to_send)
-        
-        opening_tags = ""
-        if open_tags:
-            for tag in open_tags:
-                opening_tags += f"<{tag}>"
-
-        text = opening_tags + text[split_pos:].lstrip()
-
-    for i, part in enumerate(parts):
-        is_last_part = (i == len(parts) - 1)
-        current_markup = reply_markup if is_last_part else None
-        
-        try:
-            if i == 0 and message.chat.type != 'private':
-                 await message.reply(part, parse_mode=parse_mode, reply_markup=current_markup, disable_web_page_preview=True)
-            else:
-                 await message.answer(part, parse_mode=parse_mode, reply_markup=current_markup, disable_web_page_preview=True)
-        except TelegramBadRequest:
-            safe_part = escape_html(part)
-            if i == 0 and message.chat.type != 'private':
-                await message.reply(safe_part, parse_mode=None, reply_markup=current_markup, disable_web_page_preview=True)
-            else:
-                await message.answer(safe_part, parse_mode=None, reply_markup=current_markup, disable_web_page_preview=True)
-
-        await asyncio.sleep(0.5)
 
 
 @router.message(CommandStart())
@@ -237,54 +159,12 @@ async def show_reasoning_callback(callback: CallbackQuery, supabase: Client, tra
 
 @router.message(F.text & ~F.text.startswith('/'))
 async def handle_message(message: Message, supabase: Client, translator: Translator, lang_code: str):
-    user_id = message.from_user.id
-    is_limited = await check_and_handle_limit(supabase, user_id)
-    if is_limited:
-        try: limit = int(os.environ.get("DAILY_CHAT_LIMIT", 20))
-        except (ValueError, TypeError): limit = 20
-        await message.answer(translator.get_text("limit_reached", lang_code).format(limit=limit))
-        return
+    # <-- PERUBAHAN: Seluruh isi fungsi diganti dengan satu baris panggilan ini
+    await process_text_message(message, message.text, supabase, translator, lang_code)
 
-    await save_message(supabase, user_id, 'user', message.text)
-    sent_message = await message.reply(translator.get_text("thinking", lang_code))
-    
-    try:
-        response_data = await get_groq_response(user_id, message.text, supabase, translator, lang_code)
-        
-        if response_data.get("sources"):
-            await sent_message.edit_text(translator.get_text("thinking_web_search", lang_code))
-
-        full_response = response_data["content"]
-        reasoning_text = response_data["reasoning"]
-        sources = response_data.get("sources", [])
-
-        await sent_message.delete()
-
-        if full_response and full_response.strip():
-            message_id = await save_message(supabase, user_id, 'assistant', full_response, reasoning_text)
-            
-            parsed_response = process_telegram_html(full_response)
-            
-            if sources:
-                sources_text = translator.get_text("sources_title", lang_code)
-                for i, source in enumerate(sources[:6]):
-                    # PERUBAHAN DI SINI: Menggunakan source.url dan source.title
-                    sources_text += f"{i+1}. <a href=\"{source.url}\">{escape_html(source.title)}</a>\n"
-                parsed_response += sources_text
-
-            reply_markup = None
-            if reasoning_text and message_id:
-                builder = InlineKeyboardBuilder()
-                builder.button(text=translator.get_text("show_reasoning_button", lang_code), callback_data=f"show_reasoning_{message_id}")
-                reply_markup = builder.as_markup()
-            
-            await send_long_message(message, parsed_response, reply_markup=reply_markup)
-            await increment_chat_count(supabase, user_id)
-        else:
-            await message.reply(translator.get_text("no_response", lang_code))
-            
-    except Exception as e:
-        print(f"Error in handle_message processing: {e}")
-        try: await sent_message.edit_text(translator.get_text("stream_error", lang_code))
-        except Exception: await message.reply(translator.get_text("stream_error", lang_code))
-# --- AKHIR FUNGSI YANG DIPERBARUI ---
+@router.message(Command("ai", "chat", "ask"), F.photo == None)
+async def handle_group_text_command(message: Message, command: CommandObject, supabase: Client, translator: Translator, lang_code: str):
+    if command.args:
+        await process_text_message(message, command.args, supabase, translator, lang_code)
+    else:
+        await message.reply(translator.get_text("group_command_usage", lang_code))

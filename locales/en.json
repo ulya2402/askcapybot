@@ -23,7 +23,12 @@
     "default_vision_prompt": "What's in this image? Describe it in detail.",
 "max_images_warning": "You sent more than {max_images} images. Only the first {max_images} will be analyzed.",
 "thinking_web_search": "🔎 Searching the web...",
-    "sources_title": "\n\n<b>Sources:</b>\n"
+    "sources_title": "\n\n<b>Sources:</b>\n",
+    "group_command_usage": "Please provide a question after the command (e.g., `/ai what is the capital of Indonesia?`) or reply to an image with the command.",
+"vision_model_required": "This feature requires a vision-capable model. Please change your model to one with the 👁️ icon using /settings.",
+"inline_result_title": "Get answer for: \"{query}\"",
+"inline_placeholder": "🤖 Processing your request for: \"{query}\"...",
+"limit_reached_inline": "You have reached your daily chat limit. The answer could not be generated."
 
   }
   

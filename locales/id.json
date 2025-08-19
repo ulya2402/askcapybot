@@ -23,7 +23,12 @@
     "default_vision_prompt": "Ada apa di dalam gambar ini? Jelaskan secara rinci.",
 "max_images_warning": "Anda mengirim lebih dari {max_images} gambar. Hanya {max_images} gambar pertama yang akan dianalisis.",
 "thinking_web_search": "🔎 Mencari di web...",
-    "sources_title": "\n\n<b>Sumber:</b>\n"
+    "sources_title": "\n\n<b>Sumber:</b>\n",
+    "group_command_usage": "Silakan berikan pertanyaan setelah perintah (contoh: `/ai apa ibu kota Indonesia?`) atau balas sebuah gambar dengan perintah tersebut.",
+"vision_model_required": "Fitur ini memerlukan model yang mampu menganalisis gambar. Silakan ganti model Anda ke yang memiliki ikon 👁️ melalui /settings.",
+"inline_result_title": "Dapatkan jawaban untuk: \"{query}\"",
+"inline_placeholder": "🤖 Sedang memproses permintaan Anda untuk: \"{query}\"...",
+"limit_reached_inline": "Anda telah mencapai batas obrolan harian. Jawaban tidak dapat dibuat."
 
   }
   
