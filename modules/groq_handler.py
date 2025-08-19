@@ -2,7 +2,7 @@ import os
 import itertools
 import json
 from groq import AsyncGroq, RateLimitError
-from modules.supabase_handler import get_user_messages, get_user_model
+from modules.supabase_handler import get_user_messages, get_user_model, get_user_prompt
 from modules.translator import Translator
 
 api_keys_str = os.environ.get("GROQ_API_KEYS", "")
@@ -95,9 +95,19 @@ async def get_groq_response(user_id: int, user_message: str, supabase_client, tr
     if supports_reasoning:
         api_params["reasoning_format"] = "raw"
 
+    # Menggabungkan prompt
+    base_system_prompt = translator.get_text("system_prompt", lang_code)
+    custom_prompt = await get_user_prompt(supabase_client, user_id)
+    
+    final_system_prompt = base_system_prompt
+    if custom_prompt:
+        final_system_prompt = f"{custom_prompt}\n\n[SYSTEM RULE] Always adhere to the following formatting rule:\n{base_system_prompt}"
+
     conversation_history = await get_user_messages(supabase_client, user_id)
-    system_prompt = translator.get_text("system_prompt", lang_code)
-    messages = [{"role": "system", "content": system_prompt}]
+    messages = [{"role": "system", "content": final_system_prompt}]
+    # --- AKHIR BAGIAN YANG DIUBAH ---
+
+
     for message in conversation_history:
         messages.append({"role": message['role'], "content": message['content']})
     messages.append({"role": "user", "content": user_message})

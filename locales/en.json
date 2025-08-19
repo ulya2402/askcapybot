@@ -28,7 +28,20 @@
 "vision_model_required": "This feature requires a vision-capable model. Please change your model to one with the 👁️ icon using /settings.",
 "inline_result_title": "Get answer for: \"{query}\"",
 "inline_placeholder": "🤖 Processing your request for: \"{query}\"...",
-"limit_reached_inline": "You have reached your daily chat limit. The answer could not be generated."
+"limit_reached_inline": "You have reached your daily chat limit. The answer could not be generated.",
+"prompt_settings_button": "✍️ Change System Prompt",
+"prompt_menu_title": "✍️ <b>System Prompt Settings</b>",
+"prompt_menu_description": "A system prompt is a special instruction you give the AI to define its personality or response style.",
+"current_custom_prompt": "Your current custom prompt: <pre>{custom_prompt}</pre>",
+"no_custom_prompt": "Your current custom prompt: <i>(Not set)</i>",
+"set_update_prompt_button": "📝 Set / Update Prompt",
+"delete_prompt_button": "🗑️ Delete Prompt",
+"back_to_settings_button": "⬅️ Back to Settings",
+"set_prompt_request": "Please send your new system prompt in a single text message.",
+"prompt_updated_success": "✅ System prompt successfully updated!",
+"prompt_deleted_success": "✅ System prompt has been deleted.",
+"prompt_delete_failed": "❌ Failed to delete the system prompt."
+
 
   }
   

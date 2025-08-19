@@ -10,7 +10,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from modules.groq_handler import get_groq_response, get_groq_vision_response
 from modules.utils import send_long_message, load_models
-from modules.supabase_handler import save_message, get_user_model
+from modules.supabase_handler import save_message, get_user_model, get_user_prompt
 from modules.html_parser import process_telegram_html, escape_html
 from modules.translator import Translator
 from modules.limit_handler import check_and_handle_limit, increment_chat_count

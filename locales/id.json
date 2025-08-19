@@ -28,7 +28,20 @@
 "vision_model_required": "Fitur ini memerlukan model yang mampu menganalisis gambar. Silakan ganti model Anda ke yang memiliki ikon 👁️ melalui /settings.",
 "inline_result_title": "Dapatkan jawaban untuk: \"{query}\"",
 "inline_placeholder": "🤖 Sedang memproses permintaan Anda untuk: \"{query}\"...",
-"limit_reached_inline": "Anda telah mencapai batas obrolan harian. Jawaban tidak dapat dibuat."
+"limit_reached_inline": "Anda telah mencapai batas obrolan harian. Jawaban tidak dapat dibuat.",
+"prompt_settings_button": "✍️ Ubah System Prompt",
+"prompt_menu_title": "✍️ <b>Pengaturan System Prompt</b>",
+"prompt_menu_description": "System prompt adalah instruksi khusus yang Anda berikan kepada AI untuk mengatur kepribadian atau gaya jawabannya.",
+"current_custom_prompt": "Prompt kustom Anda saat ini: <pre>{custom_prompt}</pre>",
+"no_custom_prompt": "Prompt kustom Anda saat ini: <i>(Belum diatur)</i>",
+"set_update_prompt_button": "📝 Atur / Perbarui Prompt",
+"delete_prompt_button": "🗑️ Hapus Prompt",
+"back_to_settings_button": "⬅️ Kembali ke Pengaturan",
+"set_prompt_request": "Silakan kirimkan system prompt baru Anda dalam satu pesan teks.",
+"prompt_updated_success": "✅ System prompt berhasil diperbarui!",
+"prompt_deleted_success": "✅ System prompt telah dihapus.",
+"prompt_delete_failed": "❌ Gagal menghapus system prompt."
+
 
   }
   

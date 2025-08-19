@@ -11,17 +11,23 @@ from supabase import Client
 from modules.supabase_handler import (
     get_or_create_user, delete_user_messages,
     update_user_language, update_user_model, get_reasoning_text,
-    get_user_chat_info, get_user_model
+    get_user_chat_info, get_user_model, get_user_prompt, update_user_prompt, delete_user_prompt
 )
 from modules.translator import Translator
 from modules.html_parser import process_telegram_html, escape_html
 from modules.core_logic import process_text_message
 from modules.utils import send_long_message, load_models
 from modules.limit_handler import check_and_handle_limit
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+from supabase import Client
 
 
 
 router = Router()
+
+class PromptStates(StatesGroup):
+    waiting_for_prompt = State()
 
 
 async def get_start_menu(user: User, supabase: Client, translator: Translator, lang_code: str):
@@ -137,13 +143,67 @@ async def handle_settings(event: Message | CallbackQuery, supabase: Client, tran
     
     builder = InlineKeyboardBuilder()
     builder.button(text=translator.get_text("change_model_button", lang_code), callback_data="show_models")
+    builder.button(text=translator.get_text("prompt_settings_button", lang_code), callback_data="show_prompt_menu") # <-- Tombol baru
     builder.button(text="⬅️ Back", callback_data="back_to_start")
     builder.adjust(1)
+
     
     if isinstance(event, Message):
         await event.answer(settings_text, reply_markup=builder.as_markup())
     else:
         await event.message.edit_text(settings_text, reply_markup=builder.as_markup())
+
+@router.callback_query(F.data == "show_prompt_menu")
+async def show_prompt_menu(callback: CallbackQuery, supabase: Client, translator: Translator, lang_code: str):
+    user_id = callback.from_user.id
+    custom_prompt = await get_user_prompt(supabase, user_id)
+
+    title = translator.get_text("prompt_menu_title", lang_code)
+    description = translator.get_text("prompt_menu_description", lang_code)
+    
+    if custom_prompt:
+        prompt_display = translator.get_text("current_custom_prompt", lang_code).format(custom_prompt=escape_html(custom_prompt))
+    else:
+        prompt_display = translator.get_text("no_custom_prompt", lang_code)
+
+    full_text = f"{title}\n\n{description}\n\n{prompt_display}"
+
+    builder = InlineKeyboardBuilder()
+    builder.button(text=translator.get_text("set_update_prompt_button", lang_code), callback_data="set_prompt_request")
+    if custom_prompt:
+        builder.button(text=translator.get_text("delete_prompt_button", lang_code), callback_data="delete_prompt")
+    builder.button(text=translator.get_text("back_to_settings_button", lang_code), callback_data="start_settings")
+    builder.adjust(1)
+    
+    await callback.message.edit_text(full_text, reply_markup=builder.as_markup())
+    await callback.answer()
+
+@router.callback_query(F.data == "set_prompt_request")
+async def handle_set_prompt_request(callback: CallbackQuery, state: FSMContext, translator: Translator, lang_code: str):
+    await state.set_state(PromptStates.waiting_for_prompt)
+    await callback.message.edit_text(translator.get_text("set_prompt_request", lang_code))
+    await callback.answer()
+
+@router.message(PromptStates.waiting_for_prompt)
+async def handle_new_prompt_message(message: Message, state: FSMContext, supabase: Client, translator: Translator, lang_code: str):
+    await state.clear()
+    await update_user_prompt(supabase, message.from_user.id, message.text)
+    
+    confirmation_text = translator.get_text("prompt_updated_success", lang_code)
+    builder = InlineKeyboardBuilder()
+    builder.button(text=translator.get_text("back_to_settings_button", lang_code), callback_data="show_prompt_menu")
+    await message.answer(confirmation_text, reply_markup=builder.as_markup())
+
+@router.callback_query(F.data == "delete_prompt")
+async def handle_delete_prompt(callback: CallbackQuery, supabase: Client, translator: Translator, lang_code: str):
+    success = await delete_user_prompt(supabase, callback.from_user.id)
+    if success:
+        await callback.answer(translator.get_text("prompt_deleted_success", lang_code), show_alert=True)
+        # Refresh menu
+        await show_prompt_menu(callback, supabase, translator, lang_code)
+    else:
+        await callback.answer(translator.get_text("prompt_delete_failed", lang_code), show_alert=True)
+
 
 @router.callback_query(F.data == "show_models")
 async def show_models_callback(callback: CallbackQuery, translator: Translator, lang_code: str):

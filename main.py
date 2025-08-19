@@ -6,6 +6,7 @@ from typing import Callable, Awaitable, Any, Dict
 from dotenv import load_dotenv
 
 from aiogram import Bot, Dispatcher
+from aiogram.fsm.storage.memory import MemoryStorage # <-- Impor baru
 from aiogram.types import TelegramObject
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
@@ -49,8 +50,9 @@ async def main():
         logging.error("Failed to initialize Supabase client. Bot cannot start.")
         return
 
+    storage = MemoryStorage()
     bot = Bot(token=bot_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-    dp = Dispatcher()
+    dp = Dispatcher(storage=storage)
     
     dp.update.middleware(LanguageMiddleware())
     

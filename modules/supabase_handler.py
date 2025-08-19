@@ -134,3 +134,31 @@ async def increment_user_chat_count(supabase: Client, user_id: int):
             supabase.table('users').update({'chat_count': new_count}).eq('id', user_id).execute()
     except Exception as e:
         print(f"Error incrementing chat count for user {user_id}: {e}")
+
+async def get_user_prompt(supabase: Client, user_id: int):
+    try:
+        response = supabase.table('users').select('custom_prompt').eq('id', user_id).single().execute()
+        if response.data and response.data.get('custom_prompt'):
+            return response.data.get('custom_prompt')
+    except Exception as e:
+        print(f"Error fetching custom prompt for user {user_id}: {e}")
+    return None
+
+async def update_user_prompt(supabase: Client, user_id: int, prompt: str):
+    try:
+        supabase.table('users').update({'custom_prompt': prompt}).eq('id', user_id).execute()
+        print(f"Custom prompt for user {user_id} updated.")
+        return True
+    except Exception as e:
+        print(f"Error updating custom prompt for user {user_id}: {e}")
+        return False
+
+async def delete_user_prompt(supabase: Client, user_id: int):
+    try:
+        # Mengatur nilai kolom menjadi NULL
+        supabase.table('users').update({'custom_prompt': None}).eq('id', user_id).execute()
+        print(f"Custom prompt for user {user_id} deleted.")
+        return True
+    except Exception as e:
+        print(f"Error deleting custom prompt for user {user_id}: {e}")
+        return False
