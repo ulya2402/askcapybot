@@ -12,14 +12,14 @@
       "reasoning": true
     },
     {
-      "name": "Llama 4 maverick",
+      "name": "Llama 4 maverick 👁️",
       "value": "meta-llama/llama-4-maverick-17b-128e-instruct",
       "provider": "Meta",
       "vision": true
 
     },
     {
-      "name": "Llama 4 Scout",
+      "name": "Llama 4 Scout 👁️",
       "value": "meta-llama/llama-4-scout-17b-16e-instruct",
       "provider": "Meta",
       "vision": true

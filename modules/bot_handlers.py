@@ -16,7 +16,7 @@ from supabase import Client
 from modules.supabase_handler import (
     get_or_create_user, save_message, delete_user_messages,
     update_user_language, update_user_model, get_reasoning_text,
-    get_user_chat_info
+    get_user_chat_info, get_user_model
 )
 from modules.groq_handler import get_groq_response
 from modules.translator import Translator
@@ -168,10 +168,24 @@ async def handle_lang_callback(callback: CallbackQuery, supabase: Client, transl
     await callback.answer()
 
 @router.message(Command("settings"))
-async def handle_settings(message: Message, translator: Translator, lang_code: str):
+async def handle_settings(message: Message, supabase: Client, translator: Translator, lang_code: str):
+    user_id = message.from_user.id
+    active_model_id = await get_user_model(supabase, user_id)
+
+    models = load_models()
+    current_model_name = "Unknown"
+    for model in models:
+        if model['value'] == active_model_id:
+            current_model_name = model['name']
+            break
+            
+    settings_text = translator.get_text("settings_menu", lang_code).format(
+        current_model_name=escape_html(current_model_name)
+    )
+
     builder = InlineKeyboardBuilder()
     builder.button(text=translator.get_text("change_model_button", lang_code), callback_data="show_models")
-    await message.answer(translator.get_text("settings_menu", lang_code), reply_markup=builder.as_markup())
+    await message.answer(settings_text, reply_markup=builder.as_markup())
 
 @router.callback_query(F.data == "show_models")
 async def show_models_callback(callback: CallbackQuery, translator: Translator, lang_code: str):
