@@ -1,5 +1,5 @@
 {
-    "start_message": "Halo, {username}! Saya adalah bot yang didukung oleh Groq. Gunakan /newchat untuk memulai percakapan baru. Gunakan /lang untuk mengubah bahasa.",
+"start_message": "<b>Selamat Datang, {username}!</b> ✨\n\nSaya AskCapybot, asisten AI pribadi Anda. Saya siap membantu Anda dengan berbagai tugas!\n\n<b>Fitur Utama Saya:</b>\n💬 <b>AI Chat</b>: Tanya jawab tentang topik apa pun.\n👁️ <b>Analisis Gambar</b>: Kirim foto untuk saya analisis.\n🔎 <b>Pencarian Web</b>: Dapatkan jawaban dengan data terkini.\n\nApa yang ingin Anda lakukan sekarang?",
     "newchat_success": "Riwayat percakapan Anda telah dihapus. Mari mulai obrolan baru!",
     "newchat_fail": "Maaf, saya tidak dapat menghapus riwayat Anda saat ini. Silakan coba lagi.",
     "thinking": "Sedang berpikir...",

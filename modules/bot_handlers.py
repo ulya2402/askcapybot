@@ -3,8 +3,8 @@ from datetime import datetime, timedelta
 import pytz
 
 from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup
-from aiogram.filters import CommandStart, Command
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, User
+from aiogram.filters import CommandStart, Command, CommandObject
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from supabase import Client
 
@@ -17,97 +17,133 @@ from modules.translator import Translator
 from modules.html_parser import process_telegram_html, escape_html
 from modules.core_logic import process_text_message
 from modules.utils import send_long_message, load_models
-from modules.limit_handler import check_and_handle_limit 
-from aiogram.filters import CommandObject
+from modules.limit_handler import check_and_handle_limit
 
 
 
 router = Router()
 
 
+async def get_start_menu(user: User, supabase: Client, translator: Translator, lang_code: str):
+    await get_or_create_user(supabase, user.id, user.username or "N/A")
+    
+    start_text = translator.get_text("start_message", lang_code).format(username=escape_html(user.username or user.first_name))
+
+    builder = InlineKeyboardBuilder()
+    builder.button(text="🚀 Start New Chat", callback_data="start_newchat")
+    builder.button(text="⚙️ Settings", callback_data="start_settings")
+    builder.button(text="📊 Check Status", callback_data="start_status")
+    builder.button(text="🌐 Change Language", callback_data="start_lang")
+    builder.adjust(2)
+
+    return start_text, builder.as_markup()
+
 @router.message(CommandStart())
 async def handle_start(message: Message, supabase: Client, translator: Translator, lang_code: str):
-    user_id = message.from_user.id
-    username = message.from_user.username or "N/A"
-    await get_or_create_user(supabase, user_id, username)
-    await message.answer(translator.get_text("start_message", lang_code).format(username=username))
+    start_text, start_markup = await get_start_menu(message.from_user, supabase, translator, lang_code)
+    await message.answer(start_text, reply_markup=start_markup)
 
-# ... (handler untuk /newchat, /lang, /settings, dan callback tetap sama) ...
+# --- HANDLER UNTUK TOMBOL-TOMBOL DARI MENU START ---
+@router.callback_query(F.data == "start_newchat")
+async def handle_start_newchat_callback(callback: CallbackQuery, supabase: Client, translator: Translator, lang_code: str):
+    await callback.answer()
+    await handle_newchat(callback, supabase, translator, lang_code)
+
+@router.callback_query(F.data == "start_settings")
+async def handle_start_settings_callback(callback: CallbackQuery, supabase: Client, translator: Translator, lang_code: str):
+    await callback.answer()
+    await handle_settings(callback, supabase, translator, lang_code)
+
+@router.callback_query(F.data == "start_status")
+async def handle_start_status_callback(callback: CallbackQuery, supabase: Client, translator: Translator, lang_code: str):
+    await callback.answer()
+    await handle_status(callback, supabase, translator, lang_code)
+
+@router.callback_query(F.data == "start_lang")
+async def handle_start_lang_callback(callback: CallbackQuery, translator: Translator, lang_code: str):
+    await callback.answer()
+    await handle_lang(callback, translator, lang_code)
+
+@router.callback_query(F.data == "back_to_start")
+async def handle_back_to_start_callback(callback: CallbackQuery, supabase: Client, translator: Translator, lang_code: str):
+    start_text, start_markup = await get_start_menu(callback.from_user, supabase, translator, lang_code)
+    await callback.message.edit_text(start_text, reply_markup=start_markup)
+    await callback.answer()
+
+# --- FUNGSI-FUNGSI UTAMA YANG TELAH DIPERBAIKI ---
 @router.message(Command("newchat"))
-async def handle_newchat(message: Message, supabase: Client, translator: Translator, lang_code: str):
-    user_id = message.from_user.id
+async def handle_newchat(event: Message | CallbackQuery, supabase: Client, translator: Translator, lang_code: str):
+    user_id = event.from_user.id
     success = await delete_user_messages(supabase, user_id)
-    if success:
-        await message.answer(translator.get_text("newchat_success", lang_code))
-    else:
-        await message.answer(translator.get_text("newchat_fail", lang_code))
+    response_text = translator.get_text("newchat_success" if success else "newchat_fail", lang_code)
+    
+    if isinstance(event, Message):
+        await event.answer(response_text)
+    else: # Jika dari callback, edit pesan
+        await event.message.edit_text(response_text)
 
 @router.message(Command("status", "info"))
-async def handle_status(message: Message, supabase: Client, translator: Translator, lang_code: str):
-    user_id = message.from_user.id
-    limit = os.environ.get("DAILY_CHAT_LIMIT", 20)
-    
-    # Ensure the count is up-to-date before displaying
+async def handle_status(event: Message | CallbackQuery, supabase: Client, translator: Translator, lang_code: str):
+    user_id = event.from_user.id
+    try: limit = int(os.environ.get("DAILY_CHAT_LIMIT", 20))
+    except (ValueError, TypeError): limit = 20
     await check_and_handle_limit(supabase, user_id)
-    
     user_info = await get_user_chat_info(supabase, user_id)
     usage = user_info.get('chat_count', 0) if user_info else 0
-
-    # Calculate time until next 00:00 UTC
-    now_utc = datetime.now(pytz.utc)
-    tomorrow_utc = now_utc.date() + timedelta(days=1)
+    now_utc, tomorrow_utc = datetime.now(pytz.utc), datetime.now(pytz.utc).date() + timedelta(days=1)
     midnight_utc = datetime.combine(tomorrow_utc, datetime.min.time(), tzinfo=pytz.utc)
     time_left = midnight_utc - now_utc
+    hours_left, minutes_left = time_left.seconds // 3600, (time_left.seconds % 3600) // 60
+    status_text = translator.get_text("status_message", lang_code).format(user_id=user_id, usage=usage, limit=limit, hours=hours_left, minutes=minutes_left)
     
-    hours_left = time_left.seconds // 3600
-    minutes_left = (time_left.seconds % 3600) // 60
-
-    status_text = translator.get_text("status_message", lang_code).format(
-        user_id=user_id,
-        usage=usage,
-        limit=limit,
-        hours=hours_left,
-        minutes=minutes_left
-    )
-    await message.answer(status_text)
-
+    if isinstance(event, Message):
+        await event.answer(status_text)
+    else:
+        await event.message.edit_text(status_text, reply_markup=InlineKeyboardBuilder().button(text="⬅️ Back", callback_data="back_to_start").as_markup())
 
 @router.message(Command("lang"))
-async def handle_lang(message: Message, translator: Translator, lang_code: str):
+async def handle_lang(event: Message | CallbackQuery, translator: Translator, lang_code: str):
     builder = InlineKeyboardBuilder()
     builder.button(text="English 🇬🇧", callback_data="lang_en")
     builder.button(text="Indonesia 🇮🇩", callback_data="lang_id")
-    builder.adjust(2)
-    await message.answer(translator.get_text("lang_select", lang_code), reply_markup=builder.as_markup())
+    builder.button(text="⬅️ Back", callback_data="back_to_start")
+    builder.adjust(2, 1) # 2 tombol bahasa, 1 tombol back
+    
+    lang_text = translator.get_text("lang_select", lang_code)
+    
+    if isinstance(event, Message):
+        await event.answer(lang_text, reply_markup=builder.as_markup())
+    else:
+        await event.message.edit_text(lang_text, reply_markup=builder.as_markup())
 
 @router.callback_query(F.data.startswith("lang_"))
 async def handle_lang_callback(callback: CallbackQuery, supabase: Client, translator: Translator):
-    new_lang_code = callback.data.split("_")[1]
-    user_id = callback.from_user.id
+    new_lang_code, user_id = callback.data.split("_")[1], callback.from_user.id
     await update_user_language(supabase, user_id, new_lang_code)
     confirmation_message = translator.get_text(f"lang_updated_{new_lang_code}", new_lang_code)
-    await callback.message.edit_text(confirmation_message)
+    
+    builder = InlineKeyboardBuilder()
+    builder.button(text="⬅️ Back", callback_data="back_to_start")
+    await callback.message.edit_text(confirmation_message, reply_markup=builder.as_markup())
     await callback.answer()
 
 @router.message(Command("settings"))
-async def handle_settings(message: Message, supabase: Client, translator: Translator, lang_code: str):
-    user_id = message.from_user.id
+async def handle_settings(event: Message | CallbackQuery, supabase: Client, translator: Translator, lang_code: str):
+    user_id = event.from_user.id
     active_model_id = await get_user_model(supabase, user_id)
-
     models = load_models()
-    current_model_name = "Unknown"
-    for model in models:
-        if model['value'] == active_model_id:
-            current_model_name = model['name']
-            break
-            
-    settings_text = translator.get_text("settings_menu", lang_code).format(
-        current_model_name=escape_html(current_model_name)
-    )
-
+    current_model_name = next((model['name'] for model in models if model['value'] == active_model_id), "Unknown")
+    settings_text = translator.get_text("settings_menu", lang_code).format(current_model_name=escape_html(current_model_name))
+    
     builder = InlineKeyboardBuilder()
     builder.button(text=translator.get_text("change_model_button", lang_code), callback_data="show_models")
-    await message.answer(settings_text, reply_markup=builder.as_markup())
+    builder.button(text="⬅️ Back", callback_data="back_to_start")
+    builder.adjust(1)
+    
+    if isinstance(event, Message):
+        await event.answer(settings_text, reply_markup=builder.as_markup())
+    else:
+        await event.message.edit_text(settings_text, reply_markup=builder.as_markup())
 
 @router.callback_query(F.data == "show_models")
 async def show_models_callback(callback: CallbackQuery, translator: Translator, lang_code: str):
@@ -115,25 +151,25 @@ async def show_models_callback(callback: CallbackQuery, translator: Translator, 
     builder = InlineKeyboardBuilder()
     for model in models:
         builder.button(text=f"{model['name']} ({model['provider']})", callback_data=f"setmodel_{model['value']}")
+    builder.button(text="⬅️ Back", callback_data="start_settings") # Kembali ke menu settings
     builder.adjust(1)
+    
     await callback.message.edit_text(translator.get_text("select_model", lang_code), reply_markup=builder.as_markup())
+    await callback.answer()
 
 @router.callback_query(F.data.startswith("setmodel_"))
 async def set_model_callback(callback: CallbackQuery, supabase: Client, translator: Translator, lang_code: str):
-    model_value = callback.data.split("_")[1]
-    user_id = callback.from_user.id
+    model_value, user_id = callback.data.split("_")[1], callback.from_user.id
     await update_user_model(supabase, user_id, model_value)
-    
     models = load_models()
-    model_name = "Unknown"
-    for model in models:
-        if model['value'] == model_value:
-            model_name = model['name']
-            break
-            
+    model_name = next((model['name'] for model in models if model['value'] == model_value), "Unknown")
     confirmation_message = translator.get_text("model_updated", lang_code).format(model_name=model_name)
-    await callback.message.edit_text(confirmation_message)
+    
+    builder = InlineKeyboardBuilder()
+    builder.button(text="⬅️ Back", callback_data="start_settings")
+    await callback.message.edit_text(confirmation_message, reply_markup=builder.as_markup())
     await callback.answer()
+
 
 @router.callback_query(F.data.startswith("show_reasoning_"))
 async def show_reasoning_callback(callback: CallbackQuery, supabase: Client, translator: Translator, lang_code: str):

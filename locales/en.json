@@ -1,5 +1,5 @@
 {
-    "start_message": "Hello, {username}! I'm a bot powered by Groq. Use /newchat to start a fresh conversation. Use /lang to change the language.",
+"start_message": "<b>Welcome, {username}!</b> ✨\n\nI am AskCapybot, your personal AI assistant. I'm ready to help you with various tasks!\n\n<b>My Main Features:</b>\n💬 <b>AI Chat</b>: Ask anything on any topic.\n👁️ <b>Image Analysis</b>: Send a photo for me to analyze.\n🔎 <b>Web Search</b>: Get answers with the latest information.\n\nWhat would you like to do now?",
     "newchat_success": "Your conversation history has been cleared. Let's start a new chat!",
     "newchat_fail": "Sorry, I couldn't clear your history at the moment. Please try again.",
     "thinking": "Thinking...",
