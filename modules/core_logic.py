@@ -18,7 +18,6 @@ from modules.limit_handler import check_and_handle_limit, increment_chat_count
 MAX_IMAGES = 3
 
 async def generate_ai_response(user_id: int, text_prompt: str, supabase: Client, translator: Translator, lang_code: str) -> Dict[str, Any]:
-    """Hanya mengambil dan memformat respons dari AI, tidak mengirim pesan."""
     response_data = await get_groq_response(user_id, text_prompt, supabase, translator, lang_code)
     
     full_response = response_data.get("content", "")
@@ -38,9 +37,12 @@ async def generate_ai_response(user_id: int, text_prompt: str, supabase: Client,
 
     return {
         "final_text": final_text,
+        "original_content": full_response,
         "reasoning": reasoning_text,
         "sources_found": bool(sources)
     }
+
+
 
 
 async def process_text_message(message: Message, text_prompt: str, supabase: Client, translator: Translator, lang_code: str):
@@ -56,34 +58,28 @@ async def process_text_message(message: Message, text_prompt: str, supabase: Cli
     sent_message = await message.reply(translator.get_text("thinking", lang_code))
     
     try:
-        response_data = await get_groq_response(user_id, text_prompt, supabase, translator, lang_code)
+        response_data = await generate_ai_response(user_id, text_prompt, supabase, translator, lang_code)
         
-        if response_data.get("sources"):
+        if response_data.get("sources_found"):
             await sent_message.edit_text(translator.get_text("thinking_web_search", lang_code))
 
-        full_response = response_data["content"]
+        final_text = response_data["final_text"]
+        original_content = response_data["original_content"] 
         reasoning_text = response_data["reasoning"]
-        sources = response_data.get("sources", [])
 
         await sent_message.delete()
 
-        if full_response and full_response.strip():
-            message_id = await save_message(supabase, user_id, 'assistant', full_response, reasoning_text)
-            parsed_response = process_telegram_html(full_response)
+        if final_text and final_text.strip():
+            # We need the original full response for saving, not the parsed one
+            message_id = await save_message(supabase, user_id, 'assistant', original_full_response['content'], reasoning_text)
             
-            if sources:
-                sources_text = translator.get_text("sources_title", lang_code)
-                for i, source in enumerate(sources[:5]):
-                    sources_text += f"{i+1}. <a href=\"{source.url}\">{escape_html(source.title)}</a>\n"
-                parsed_response += sources_text
-
             reply_markup = None
             if reasoning_text and message_id:
                 builder = InlineKeyboardBuilder()
                 builder.button(text=translator.get_text("show_reasoning_button", lang_code), callback_data=f"show_reasoning_{message_id}")
                 reply_markup = builder.as_markup()
             
-            await send_long_message(message, parsed_response, reply_markup=reply_markup)
+            await send_long_message(message, final_text, reply_markup=reply_markup)
             await increment_chat_count(supabase, user_id)
         else:
             await message.reply(translator.get_text("no_response", lang_code))
