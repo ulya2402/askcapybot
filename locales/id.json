@@ -21,7 +21,9 @@
   "status_message": "<b>📊 Status Anda</b>\n\n<b>ID Pengguna:</b> <code>{user_id}</code>\n<b>Penggunaan Hari Ini:</b> {usage}/{limit}\n<b>Reset dalam:</b> {hours} jam {minutes} menit",
   "thinking_vision": "👁️ Menganalisis gambar...",
     "default_vision_prompt": "Ada apa di dalam gambar ini? Jelaskan secara rinci.",
-"max_images_warning": "Anda mengirim lebih dari {max_images} gambar. Hanya {max_images} gambar pertama yang akan dianalisis."
+"max_images_warning": "Anda mengirim lebih dari {max_images} gambar. Hanya {max_images} gambar pertama yang akan dianalisis.",
+"thinking_web_search": "🔎 Mencari di web...",
+    "sources_title": "\n\n<b>Sumber:</b>\n"
 
   }
   
