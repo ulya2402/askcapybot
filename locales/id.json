@@ -40,7 +40,11 @@
 "set_prompt_request": "Silakan kirimkan system prompt baru Anda dalam satu pesan teks.",
 "prompt_updated_success": "✅ System prompt berhasil diperbarui!",
 "prompt_deleted_success": "✅ System prompt telah dihapus.",
-"prompt_delete_failed": "❌ Gagal menghapus system prompt."
+"prompt_delete_failed": "❌ Gagal menghapus system prompt.",
+"force_subscribe_text": "Untuk melanjutkan, Anda harus bergabung ke semua channel kami terlebih dahulu. Silakan bergabung menggunakan tombol di bawah ini, lalu klik 'Coba Lagi'.",
+"join_folder_button": "➡️ Gabung Ke channel",
+"retry_button": "🔄 Coba Lagi",
+"rechecking_membership_alert": "Terima kasih! Sedang memeriksa ulang keanggotaan Anda..."
 
 
   }

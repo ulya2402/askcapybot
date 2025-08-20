@@ -40,7 +40,11 @@
 "set_prompt_request": "Please send your new system prompt in a single text message.",
 "prompt_updated_success": "✅ System prompt successfully updated!",
 "prompt_deleted_success": "✅ System prompt has been deleted.",
-"prompt_delete_failed": "❌ Failed to delete the system prompt."
+"prompt_delete_failed": "❌ Failed to delete the system prompt.",
+"force_subscribe_text": "To continue, you must join all of our channels first. Please join using the button below, then click 'Try Again'.",
+"join_folder_button": "➡️ Join Channel",
+"retry_button": "🔄 Try Again",
+"rechecking_membership_alert": "Thank you! Re-checking your membership..."
 
 
   }

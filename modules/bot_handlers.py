@@ -268,9 +268,12 @@ async def handle_group_text_command(message: Message, command: CommandObject, su
 @router.callback_query(F.data.startswith("check_membership"))
 async def handle_check_membership_callback(callback: CallbackQuery, supabase: Client, translator: Translator, lang_code: str):
     """
-    Handles the 'Coba Lagi' button after a user joins the required channels.
+    Handles the 'Try Again' button after a user joins the required channels.
     """
-    await callback.answer("Terima kasih! Sedang memeriksa ulang keanggotaan Anda...")
+    # Gunakan translator untuk pesan alert
+    alert_text = translator.get_text("rechecking_membership_alert", lang_code)
+    await callback.answer(alert_text)
+    
     # Hapus pesan "wajib gabung" agar chat bersih
     await callback.message.delete()
     
