@@ -253,17 +253,10 @@ async def show_reasoning_callback(callback: CallbackQuery, supabase: Client, tra
     
     await callback.answer()
 
-@router.message(F.text & ~F.text.startswith('/'))
+@router.message(F.text & ~F.text.startswith('/'), F.chat.type == "private")
 async def handle_message(message: Message, supabase: Client, translator: Translator, lang_code: str):
     # <-- PERUBAHAN: Seluruh isi fungsi diganti dengan satu baris panggilan ini
     await process_text_message(message, message.text, supabase, translator, lang_code)
-
-@router.message(Command("ai", "chat", "ask"), F.photo == None)
-async def handle_group_text_command(message: Message, command: CommandObject, supabase: Client, translator: Translator, lang_code: str):
-    if command.args:
-        await process_text_message(message, command.args, supabase, translator, lang_code)
-    else:
-        await message.reply(translator.get_text("group_command_usage", lang_code))
 
 @router.callback_query(F.data.startswith("check_membership"))
 async def handle_check_membership_callback(callback: CallbackQuery, supabase: Client, translator: Translator, lang_code: str):
