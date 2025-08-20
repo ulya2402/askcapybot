@@ -115,15 +115,18 @@ async def get_rag_response(query: str, translator: Translator, lang_code: str):
         if not organic_results:
             return {"content": "Sorry, I couldn't find any information on the internet.", "sources": []}
         
-        top_results = organic_results[:3]
+        top_results = organic_results[:5]
         
         # 2. Pengambilan Konten (Scraping)
         scraped_content = []
         sources = []
+        
+        max_chars_per_source = 7500 // len(top_results)
         for result in top_results:
             content = scrape_url_content(result['link'])
             if content:
-                scraped_content.append(f"--- Konten dari {result['link']} ---\n{content}")
+                # Teks dipotong di sini, sebelum digabungkan
+                scraped_content.append(f"--- Content from {result['link']} ---\n{content[:max_chars_per_source]}")
                 sources.append(result)
         
         if not scraped_content:
@@ -131,11 +134,16 @@ async def get_rag_response(query: str, translator: Translator, lang_code: str):
 
         # 3. Penggabungan (Augmentation)
         context = "\n\n".join(scraped_content)
+        
         rag_prompt = (
-            "You are an expert AI assistant specializing in summarizing information from multiple sources.\n"
-            "Based on the context provided below, answer the user's question accurately and informatively.\n"
-            "Provide your answer in Telegram-supported HTML format. Do not invent information.\n\n"
-            f"--- INTERNET CONTEXT ---\n{context[:12000]}\n\n"
+            "You are a Senior Research Analyst AI. Your task is to synthesize the provided INTERNET CONTEXT to answer the USER'S QUESTION.\n\n"
+            "Follow these strict formatting rules for your response:\n"
+            "1.  Start with a direct, concise summary that immediately answers the user's question.\n"
+            "2.  Use <b>bold tags</b> for headings or to emphasize key concepts.\n"
+            "3.  Use bullet points (•) to list details, benefits, or steps. Do not use numbered lists.\n"
+            "4.  The entire response must be a single, cohesive text formatted with Telegram-supported HTML (<b>, <i>, <u>, <s>, <code>, <pre>, <blockquote>).\n"
+            "5.  Do NOT invent any information or provide details outside of the provided context.\n\n"
+            f"--- INTERNET CONTEXT ---\n{context}\n\n"
             f"--- USER'S QUESTION ---\n{query}"
         )
         

@@ -44,7 +44,18 @@
 "force_subscribe_text": "Untuk melanjutkan, Anda harus bergabung ke semua channel kami terlebih dahulu. Silakan bergabung menggunakan tombol di bawah ini, lalu klik 'Coba Lagi'.",
 "join_folder_button": "➡️ Gabung Ke channel",
 "retry_button": "🔄 Coba Lagi",
-"rechecking_membership_alert": "Terima kasih! Sedang memeriksa ulang keanggotaan Anda..."
+"rechecking_membership_alert": "Terima kasih! Sedang memeriksa ulang keanggotaan Anda...",
+"help_main_title": "<b>🆘 Pusat Bantuan</b>\n\nHalo! Saya AskCapybot, asisten AI serbaguna Anda. Ada yang bisa saya bantu? Silakan pilih kategori di bawah ini:",
+"help_button_basic": "🤖 Perintah Dasar",
+"help_button_ai": "🧠 Fitur AI",
+"help_button_inline": "💬 Mode Inline",
+"help_button_back": "⬅️ Kembali ke Menu Bantuan",
+"help_basic_title": "<b>🤖 Perintah Dasar</b>\n\nBerikut adalah perintah-perintah fundamental untuk mengelola interaksi Anda dengan saya:",
+"help_basic_content": "• /start - Menu Selamat datang.\n• /newchat - Menghapus riwayat percakapan Anda untuk memulai dari awal.\n• /settings - Mengganti model AI atau mengatur system prompt kustom.\n• /status - Memeriksa batas penggunaan pesan harian Anda.\n• /lang - Mengganti bahasa bot.",
+"help_ai_title": "<b>🧠 Fitur AI</b>\n\nJelajahi kemampuan inti AI saya:",
+"help_ai_content": "• <b>Chat Standar</b>: Cukup kirim pesan teks apa pun untuk memulai percakapan. AI akan merespons berdasarkan pengetahuannya dan riwayat obrolan Anda.\n\n• <b>🖼️ Analisis Gambar (Vision)</b>: Kirim foto (atau beberapa foto dalam satu album) dengan caption. AI akan menganalisis dan menjelaskan isi gambar tersebut. Memerlukan model yang mampu melakukan Vision (👁️).\n\n• <b>🌐 Pencarian Web (RAG)</b>: Gunakan `/web` atau `/i` diikuti pertanyaan Anda (contoh: `/web berita teknologi terbaru`). Saya akan mencari di internet, membaca hasil teratas, dan memberikan jawaban rangkuman yang faktual beserta sumbernya.",
+"help_inline_title": "<b>💬 Mode Inline</b>\n\nGunakan kemampuan AI saya di chat mana pun tanpa perlu menambahkan saya!",
+"help_inline_content": "1. Pergi ke chat mana pun (grup, channel, atau chat pribadi dengan teman).\n2. Ketik username saya `@Sunoaibottestbot` diikuti oleh pertanyaan Anda (contoh: `@Sunoaibottestbot apa itu fotosintesis`).\n3. Tunggu sejenak hingga AI selesai memproses.\n4. Ketuk hasilnya untuk mengirim jawaban langsung ke dalam chat tersebut."
 
 
   }

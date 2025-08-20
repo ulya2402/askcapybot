@@ -79,6 +79,43 @@ async def handle_back_to_start_callback(callback: CallbackQuery, supabase: Clien
     await callback.message.edit_text(start_text, reply_markup=start_markup)
     await callback.answer()
 
+async def get_help_menu(translator: Translator, lang_code: str):
+    """Membangun menu bantuan utama."""
+    text = translator.get_text("help_main_title", lang_code)
+    builder = InlineKeyboardBuilder()
+    builder.button(text=translator.get_text("help_button_basic", lang_code), callback_data="help_basic")
+    builder.button(text=translator.get_text("help_button_ai", lang_code), callback_data="help_ai")
+    builder.button(text=translator.get_text("help_button_inline", lang_code), callback_data="help_inline")
+    builder.adjust(1)
+    return text, builder.as_markup()
+
+@router.message(Command("help"))
+async def handle_help_command(message: Message, translator: Translator, lang_code: str):
+    text, markup = await get_help_menu(translator, lang_code)
+    await message.answer(text, reply_markup=markup)
+
+@router.callback_query(F.data == "back_to_help")
+async def handle_back_to_help_callback(callback: CallbackQuery, translator: Translator, lang_code: str):
+    text, markup = await get_help_menu(translator, lang_code)
+    await callback.message.edit_text(text, reply_markup=markup)
+    await callback.answer()
+
+@router.callback_query(F.data.startswith("help_"))
+async def handle_help_category_callback(callback: CallbackQuery, translator: Translator, lang_code: str):
+    category = callback.data.split("_")[1]
+    
+    title = translator.get_text(f"help_{category}_title", lang_code)
+    content = translator.get_text(f"help_{category}_content", lang_code)
+    
+    text = f"{title}\n\n{content}"
+    
+    builder = InlineKeyboardBuilder()
+    builder.button(text=translator.get_text("help_button_back", lang_code), callback_data="back_to_help")
+    
+    await callback.message.edit_text(text, reply_markup=builder.as_markup())
+    await callback.answer()
+
+
 # --- FUNGSI-FUNGSI UTAMA YANG TELAH DIPERBAIKI ---
 @router.message(Command("newchat"))
 async def handle_newchat(event: Message | CallbackQuery, supabase: Client, translator: Translator, lang_code: str):
@@ -309,9 +346,12 @@ async def handle_web_command(message: Message, command: CommandObject, supabase:
             parsed_response = process_telegram_html(final_text)
 
             if sources:
-                sources_text = translator.get_text("sources_title", lang_code)
-                for i, source in enumerate(sources):
-                    sources_text += f"{i+1}. <a href=\"{source['link']}\">{escape_html(source['title'])}</a>\n"
+                sources_title = translator.get_text("sources_title", lang_code)
+                # Buat daftar link bernomor [1] [2] [3]
+                links = [f"<a href=\"{source['link']}\">[{i+1}]</a>" for i, source in enumerate(sources)]
+                # Gabungkan judul dengan link yang sudah diformat
+                sources_text = f"{sources_title} {' '.join(links)}"
+                # Tambahkan ke respons akhir dengan spasi yang cukup
                 parsed_response += f"{sources_text}"
 
             await thinking_message.delete()

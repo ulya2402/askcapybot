@@ -44,7 +44,18 @@
 "force_subscribe_text": "To continue, you must join all of our channels first. Please join using the button below, then click 'Try Again'.",
 "join_folder_button": "➡️ Join Channel",
 "retry_button": "🔄 Try Again",
-"rechecking_membership_alert": "Thank you! Re-checking your membership..."
+"rechecking_membership_alert": "Thank you! Re-checking your membership...",
+"help_main_title": "<b>🆘 Help Center</b>\n\nHello! I am AskCapybot, your versatile AI assistant. How can I assist you today? Please select a category below:",
+"help_button_basic": "🤖 Basic Commands",
+"help_button_ai": "🧠 AI Features",
+"help_button_inline": "💬 Inline Mode",
+"help_button_back": "⬅️ Back to Help Menu",
+"help_basic_title": "<b>🤖 Basic Commands</b>\n\nHere are the fundamental commands to manage your interaction with me:",
+"help_basic_content": "• /start - Welcome menu.\n• /newchat - Clears your conversation history to start fresh.\n• /settings - Changes the AI model or sets a custom system prompt.\n• /status - Checks your daily message usage limit.\n• /lang - Changes the bot's language.",
+"help_ai_title": "<b>🧠 AI Features</b>\n\nExplore my core AI capabilities:",
+"help_ai_content": "• <b>Standard Chat</b>: Simply send any text message to start a conversation. The AI will respond based on its knowledge and your chat history.\n\n• <b>🖼️ Image Analysis (Vision)</b>: Send a photo (or multiple photos in an album) with a caption. The AI will analyze and describe what's in the image. Requires a Vision-capable model (👁️).\n\n• <b>🌐 Web Search (RAG)</b>: Use `/web` or `/i` followed by your question (e.g., `/web latest tech news`). I will search the internet, read the top results, and provide a summarized, factual answer with sources.",
+"help_inline_title": "<b>💬 Inline Mode</b>\n\nUse my AI capabilities in any chat without adding me!",
+"help_inline_content": "1. Go to any chat (a group, a channel, or a private chat with a friend).\n2. Type my username `@Sunoaibottestbot` followed by your question (e.g., `@Sunoaibottestbot what is photosynthesis`).\n3. Wait a moment for the AI to process.\n4. Tap the result to send the answer directly into the chat."
 
 
   }
