@@ -5,4 +5,5 @@ python-dotenv==1.0.1
 beautifulsoup4
 pytz
 cachetools
-
+requests
+google-search-results

@@ -1,13 +1,24 @@
 import os
 import itertools
 import json
+import requests
+from bs4 import BeautifulSoup
 from groq import AsyncGroq, RateLimitError
+from serpapi import GoogleSearch
+
 from modules.supabase_handler import get_user_messages, get_user_model, get_user_prompt
 from modules.translator import Translator
 
-api_keys_str = os.environ.get("GROQ_API_KEYS", "")
-api_keys = [key.strip() for key in api_keys_str.split(',') if key.strip()]
-key_cycler = itertools.cycle(api_keys)
+# --- Konfigurasi Kunci API dan Model ---
+# Rotasi untuk Groq API
+groq_api_keys_str = os.environ.get("GROQ_API_KEYS", "")
+groq_api_keys = [key.strip() for key in groq_api_keys_str.split(',') if key.strip()]
+groq_key_cycler = itertools.cycle(groq_api_keys)
+
+# Rotasi untuk SerpApi
+serpapi_keys_str = os.environ.get("SERPAPI_API_KEYS", "")
+serpapi_keys = [key.strip() for key in serpapi_keys_str.split(',') if key.strip()]
+serpapi_key_cycler = itertools.cycle(serpapi_keys)
 
 def load_models_config():
     try:
@@ -18,167 +29,153 @@ def load_models_config():
 
 models_config = load_models_config()
 
-async def needs_web_search(user_message: str) -> bool:
+def scrape_url_content(url: str) -> str:
     try:
-        current_key = next(key_cycler)
-        client = AsyncGroq(api_key=current_key)
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
         
-        prompt = f"""
-        You are a smart assistant that decides if a user's query requires an internet search.
-        Answer with only 'yes' or 'no'.
-
-        Respond 'yes' if the query:
-        1. Asks for current, recent, or real-time information (e.g., "what happened yesterday", "latest news", "weather in Jakarta").
-        2. Explicitly asks to search the web (e.g., "search for", "find on the internet", "Google this").
-        3. Asks about a very specific or niche topic that is likely not in general knowledge.
-
-        Respond 'no' if the query is a general knowledge question that does not require up-to-date information (e.g., "what is photosynthesis?", "capital of France").
-
-        User Query: "{user_message}"
-        Decision:
-        """
+        soup = BeautifulSoup(response.content, 'html.parser')
         
-        response = await client.chat.completions.create(
-            messages=[{"role": "user", "content": prompt}],
-            model="llama3-8b-8192",
-            temperature=0.0,
-            max_tokens=10,
-        )
-        
-        decision = response.choices[0].message.content.strip().lower()
-        print(f"Web search check for query '{user_message[:50]}...': {decision}")
-        return 'yes' in decision
-    except Exception as e:
-        print(f"Error during web search check: {e}")
-        return False
-
-async def get_groq_search_response(user_message: str, translator: Translator, lang_code: str):
-    for _ in range(len(api_keys)):
-        current_key = next(key_cycler)
-        client = AsyncGroq(api_key=current_key)
-        try:
-            response = await client.chat.completions.create(
-                model="compound-beta",
-                messages=[{"role": "user", "content": user_message}]
-            )
+        for script_or_style in soup(['script', 'style', 'nav', 'footer', 'header']):
+            script_or_style.decompose()
             
-            content = response.choices[0].message.content
-            search_results = []
-            if response.choices[0].message.executed_tools:
-                # PERUBAHAN DI SINI: Mengakses atribut .results, bukan .get()
-                search_results = response.choices[0].message.executed_tools[0].search_results.results
-
-            return {"content": content, "reasoning": None, "sources": search_results}
-        except RateLimitError:
-            print(f"Rate limit exceeded for key ending in ...{current_key[-4:]} during web search. Rotating key.")
-            continue
-        except Exception as e:
-            print(f"An unexpected error occurred with key ...{current_key[-4:]} during web search: {e}")
-            continue
-    
-    return {"content": translator.get_text("all_services_busy", lang_code), "reasoning": None, "sources": []}
-# --- AKHIR FUNGSI YANG DIPERBARUI ---
+        text = soup.get_text(separator='\n', strip=True)
+        return text
+    except requests.RequestException as e:
+        print(f"Error fetching URL {url}: {e}")
+        return None
+    except Exception as e:
+        print(f"Error scraping content from {url}: {e}")
+        return None
 
 async def get_groq_response(user_id: int, user_message: str, supabase_client, translator: Translator, lang_code: str):
-    if not api_keys:
-        print("Error: GROQ_API_KEYS not found or is empty in .env file.")
-        return {"content": translator.get_text("api_key_not_configured", lang_code), "reasoning": None, "sources": []}
-
-    if await needs_web_search(user_message):
-        return await get_groq_search_response(user_message, translator, lang_code)
+    if not groq_api_keys:
+        return {"content": translator.get_text("api_key_not_configured", lang_code), "reasoning": None}
 
     active_model_id = await get_user_model(supabase_client, user_id)
     model_info = models_config.get(active_model_id, {})
     supports_reasoning = model_info.get("reasoning", False)
 
-    api_params = { "temperature": 0.7, "max_tokens": 4096, "top_p": 1, "stop": None, "stream": True }
+    api_params = { "temperature": 0.7, "max_tokens": 4096 }
     if supports_reasoning:
         api_params["reasoning_format"] = "raw"
 
-    # Menggabungkan prompt
     base_system_prompt = translator.get_text("system_prompt", lang_code)
     custom_prompt = await get_user_prompt(supabase_client, user_id)
-    
     final_system_prompt = base_system_prompt
     if custom_prompt:
-        final_system_prompt = f"{custom_prompt}\n\n[SYSTEM RULE] Always adhere to the following formatting rule:\n{base_system_prompt}"
+        final_system_prompt = f"{custom_prompt}\n\n[SYSTEM RULE]:\n{base_system_prompt}"
 
     conversation_history = await get_user_messages(supabase_client, user_id)
     messages = [{"role": "system", "content": final_system_prompt}]
-    # --- AKHIR BAGIAN YANG DIUBAH ---
-
-
     for message in conversation_history:
         messages.append({"role": message['role'], "content": message['content']})
     messages.append({"role": "user", "content": user_message})
 
-    for _ in range(len(api_keys)):
-        current_key = next(key_cycler)
+    for _ in range(len(groq_api_keys)):
+        current_key = next(groq_key_cycler)
         client = AsyncGroq(api_key=current_key)
         try:
-            stream = await client.chat.completions.create(messages=messages, model=active_model_id, **api_params)
-            full_raw_response = ""
-            async for chunk in stream:
-                content = chunk.choices[0].delta.content
-                if content:
-                    full_raw_response += content
+            response = await client.chat.completions.create(messages=messages, model=active_model_id, **api_params)
+            full_response = response.choices[0].message.content
             
-            reasoning_text, final_content = None, full_raw_response
-            if supports_reasoning and "<think>" in full_raw_response and "</think>" in full_raw_response:
+            reasoning_text, final_content = None, full_response
+            if supports_reasoning and "<think>" in full_response and "</think>" in full_response:
                 start_tag, end_tag = "<think>", "</think>"
-                start_index = full_raw_response.find(start_tag)
-                end_index = full_raw_response.find(end_tag)
+                start_index = full_response.find(start_tag)
+                end_index = full_response.find(end_tag)
                 if start_index != -1 and end_index != -1:
-                    reasoning_text = full_raw_response[start_index + len(start_tag):end_index].strip()
-                    final_content = full_raw_response[end_index + len(end_tag):].strip()
+                    reasoning_text = full_response[start_index + len(start_tag):end_index].strip()
+                    final_content = full_response[end_index + len(end_tag):].strip()
 
             return {"content": final_content, "reasoning": reasoning_text, "sources": []}
         except RateLimitError:
-            print(f"Rate limit exceeded for key ending in ...{current_key[-4:]}. Rotating key.")
             continue
         except Exception as e:
-            print(f"An unexpected error occurred with key ...{current_key[-4:]}: {e}")
+            print(f"An unexpected error occurred: {e}")
             continue
     
     return {"content": translator.get_text("all_services_busy", lang_code), "reasoning": None, "sources": []}
 
+async def get_rag_response(query: str, translator: Translator, lang_code: str):
+    if not groq_api_keys or not serpapi_keys:
+        return {"content": translator.get_text("api_key_not_configured", lang_code), "sources": []}
+
+    try:
+        # 1. Pencarian (Retrieval)
+        search_params = {
+            "q": query,
+            "api_key": next(serpapi_key_cycler)
+        }
+        search = GoogleSearch(search_params)
+        search_results = search.get_dict()
+        organic_results = search_results.get("organic_results", [])
+        
+        if not organic_results:
+            return {"content": "Sorry, I couldn't find any information on the internet.", "sources": []}
+        
+        top_results = organic_results[:3]
+        
+        # 2. Pengambilan Konten (Scraping)
+        scraped_content = []
+        sources = []
+        for result in top_results:
+            content = scrape_url_content(result['link'])
+            if content:
+                scraped_content.append(f"--- Konten dari {result['link']} ---\n{content}")
+                sources.append(result)
+        
+        if not scraped_content:
+            return {"content": "Sorry, I cannot access the content from the search results.", "sources": []}
+
+        # 3. Penggabungan (Augmentation)
+        context = "\n\n".join(scraped_content)
+        rag_prompt = (
+            "You are an expert AI assistant specializing in summarizing information from multiple sources.\n"
+            "Based on the context provided below, answer the user's question accurately and informatively.\n"
+            "Provide your answer in Telegram-supported HTML format. Do not invent information.\n\n"
+            f"--- INTERNET CONTEXT ---\n{context[:12000]}\n\n"
+            f"--- USER'S QUESTION ---\n{query}"
+        )
+        
+        # 4. Penghasilan Jawaban (Generation)
+        client = AsyncGroq(api_key=next(groq_key_cycler))
+        response = await client.chat.completions.create(
+            messages=[{"role": "user", "content": rag_prompt}],
+            model="openai/gpt-oss-120b",
+            temperature=0.5,
+        )
+        final_answer = response.choices[0].message.content
+        return {"content": final_answer, "sources": sources}
+
+    except Exception as e:
+        print(f"Error in RAG process: {e}")
+        return {"content": translator.get_text("stream_error", lang_code), "sources": []}
 
 async def get_groq_vision_response(user_id: int, prompt_text: str, base64_images: list, supabase_client, translator: Translator, lang_code: str):
-    if not api_keys:
-        print("Error: GROQ_API_KEYS not found or is empty in .env file.")
+    if not groq_api_keys:
         return {"content": translator.get_text("api_key_not_configured", lang_code)}
-
-    active_model_id = await get_user_model(supabase_client, user_id)
     
+    active_model_id = await get_user_model(supabase_client, user_id)
     content_parts = [{"type": "text", "text": prompt_text}]
     for b64_img in base64_images:
         content_parts.append({
             "type": "image_url",
             "image_url": {"url": f"data:image/jpeg;base64,{b64_img}"}
         })
-
     messages = [{"role": "user", "content": content_parts}]
-    
-    api_params = {
-        "temperature": 0.5,
-        "max_tokens": 4096,
-        "top_p": 1,
-        "stop": None,
-        "stream": False,
-    }
-
-    for _ in range(len(api_keys)):
-        current_key = next(key_cycler)
+    api_params = { "temperature": 0.5, "max_tokens": 4096 }
+    for _ in range(len(groq_api_keys)):
+        current_key = next(groq_key_cycler)
         client = AsyncGroq(api_key=current_key)
-        
         try:
             completion = await client.chat.completions.create(messages=messages, model=active_model_id, **api_params)
             return {"content": completion.choices[0].message.content}
         except RateLimitError:
-            print(f"Rate limit exceeded for key ending in ...{current_key[-4:]}. Rotating key.")
             continue
         except Exception as e:
-            print(f"An unexpected error occurred with key ...{current_key[-4:]}: {e}")
+            print(f"An unexpected error occurred: {e}")
             return {"content": translator.get_text("stream_error", lang_code)}
             
     return {"content": translator.get_text("all_services_busy", lang_code)}

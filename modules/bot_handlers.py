@@ -7,20 +7,23 @@ from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, User
 from aiogram.filters import CommandStart, Command, CommandObject
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from supabase import Client
+from modules.groq_handler import get_rag_response
 
 from modules.supabase_handler import (
     get_or_create_user, delete_user_messages,
     update_user_language, update_user_model, get_reasoning_text,
-    get_user_chat_info, get_user_model, get_user_prompt, update_user_prompt, delete_user_prompt
+    get_user_chat_info, get_user_model, get_user_prompt, update_user_prompt, delete_user_prompt, save_message
 )
 from modules.translator import Translator
 from modules.html_parser import process_telegram_html, escape_html
 from modules.core_logic import process_text_message
 from modules.utils import send_long_message, load_models
-from modules.limit_handler import check_and_handle_limit
+from modules.limit_handler import check_and_handle_limit, increment_chat_count
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from supabase import Client
+from modules.groq_handler import get_rag_response # <-- Impor ini ditambahkan
+
 
 
 
@@ -272,3 +275,51 @@ async def handle_check_membership_callback(callback: CallbackQuery, supabase: Cl
     
     # Panggil kembali fungsi /start untuk menampilkan menu utama
     await handle_start(callback.message, supabase, translator, lang_code)
+
+@router.message(Command("web", "i"))
+async def handle_web_command(message: Message, command: CommandObject, supabase: Client, translator: Translator, lang_code: str):
+    if not command.args:
+        await message.reply("Please enter your question after the command. Example: `/web what is AI?`")
+        return
+
+    query = command.args
+    user_id = message.from_user.id
+    
+    is_limited = await check_and_handle_limit(supabase, user_id)
+    if is_limited:
+        try: limit = int(os.environ.get("DAILY_CHAT_LIMIT", 20))
+        except (ValueError, TypeError): limit = 20
+        await message.answer(translator.get_text("limit_reached", lang_code).format(limit=limit))
+        return
+
+    thinking_message = await message.reply("🔎 Searching for information on the internet...")
+
+    try:
+        rag_data = await get_rag_response(query, translator, lang_code)
+        
+        await thinking_message.edit_text("📚 Summarizing the findings...")
+        
+        final_text = rag_data.get("content")
+        sources = rag_data.get("sources", [])
+        
+        if final_text and final_text.strip():
+            await save_message(supabase, user_id, 'user', f"[Web] {query}")
+            await save_message(supabase, user_id, 'assistant', final_text)
+
+            parsed_response = process_telegram_html(final_text)
+
+            if sources:
+                sources_text = translator.get_text("sources_title", lang_code)
+                for i, source in enumerate(sources):
+                    sources_text += f"{i+1}. <a href=\"{source['link']}\">{escape_html(source['title'])}</a>\n"
+                parsed_response += f"{sources_text}"
+
+            await thinking_message.delete()
+            await send_long_message(message, parsed_response)
+            await increment_chat_count(supabase, user_id)
+        else:
+            await thinking_message.edit_text("Maaf, terjadi kesalahan saat memproses permintaan Anda.")
+
+    except Exception as e:
+        print(f"Error in handle_web_command: {e}")
+        await thinking_message.edit_text(translator.get_text("stream_error", lang_code))
