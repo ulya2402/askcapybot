@@ -1,4 +1,4 @@
-from aiogram import Router, F
+from aiogram import Router, F, Bot
 from aiogram.types import Message
 from aiogram.filters import Command, CommandObject
 from supabase import Client
@@ -27,3 +27,22 @@ async def handle_group_command(message: Message, command: CommandObject, supabas
     
     # Jika tidak ada teks atau balasan gambar
     await message.reply(translator.get_text("group_command_usage", lang_code))
+
+@router.message(
+    F.reply_to_message, # Filter: Hanya aktif jika ini adalah balasan
+    F.chat.type.in_({'group', 'supergroup'}) # Filter: Hanya di grup
+)
+async def handle_group_reply(message: Message, bot: Bot, supabase: Client, translator: Translator, lang_code: str):
+    # Periksa apakah pesan yang dibalas adalah pesan dari bot itu sendiri
+    if message.reply_to_message.from_user.id == bot.id:
+        
+        # Jika balasan berisi teks, proses sebagai pesan teks
+        if message.text:
+            prompt = message.text
+            await process_text_message(message, prompt, supabase, translator, lang_code)
+        
+        # Jika balasan berisi foto, proses sebagai pesan gambar
+        elif message.photo:
+             # Gunakan caption foto sebagai prompt, atau prompt default jika kosong
+            prompt_text = message.caption or ""
+            await process_photo_message(message, [message], prompt_text, bot, supabase, translator, lang_code)
