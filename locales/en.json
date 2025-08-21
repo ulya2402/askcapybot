@@ -55,6 +55,11 @@
 "help_ai_title": "<b>🧠 AI Features</b>\n\nExplore my core AI capabilities:",
 "help_ai_content": "• <b>Standard Chat</b>: Simply send any text message to start a conversation. The AI will respond based on its knowledge and your chat history.\n\n• <b>🖼️ Image Analysis (Vision)</b>: Send a photo (or multiple photos in an album) with a caption. The AI will analyze and describe what's in the image. Requires a Vision-capable model (👁️).\n\n• <b>🌐 Web Search (RAG)</b>: Use /web or /i followed by your question (e.g., /web latest tech news). I will search the internet, read the top results, and provide a summarized, factual answer with sources.",
 "help_inline_title": "<b>💬 Inline Mode</b>\n\nUse my AI capabilities in any chat without adding me!",
-"help_inline_content": "1. Go to any chat (a group, a channel, or a private chat with a friend).\n2. Type my username @askcapybot followed by your question (e.g., <code>@askcapybot what is photosynthesis</code>).\n3. Wait a moment for the AI to process.\n4. Tap the result to send the answer directly into the chat."
+"help_inline_content": "1. Go to any chat (a group, a channel, or a private chat with a friend).\n2. Type my username @askcapybot followed by your question (e.g., <code>@askcapybot what is photosynthesis</code>).\n3. Wait a moment for the AI to process.\n4. Tap the result to send the answer directly into the chat.",
+"img_prompt_required": "You forgot the image prompt. Example: `/img a capybara in outer space`",
+"img_generating": "🎨 Preparing my canvas and paints... please wait, this might take a moment.",
+"img_error_prefix": "Oops, there was a problem: {error}",
+"img_success_caption": "🖼️ Result for prompt:\n\n<pre>{prompt}</pre>",
+"img_send_error": "Oops, I failed to send the image. The link might be broken."
   }
   

@@ -55,5 +55,10 @@
   "help_ai_title": "<b>🧠 Fitur-Fitur AI</b>\n\nIni nih kemampuan utama yang aku punya:",
   "help_ai_content": "• <b>Chat Biasa</b>: Langsung aja kirim pesan teks, nanti aku bales. Aku bakal jawab pake pengetahuanku dan history chat kita.\n\n• <b>🖼️ Analisis Gambar (Vision)</b>: Kirim foto (satu atau banyak) pake caption. Nanti aku jelasin isi fotonya. Perlu model yang ada ikonnya 👁️ ya.\n\n• <b>🌐 Cari di Web (RAG)</b>: Pake perintah `/web` atau `/i` terus pertanyaanmu (contoh: `/web berita viral hari ini`). Aku bakal cari di internet, baca sumbernya, terus kasih kamu rangkuman jawabannya.",
   "help_inline_title": "<b>💬 Mode Inline</b>\n\nPake aku di chat manapun tanpa perlu invite!",
-  "help_inline_content": "1. Buka chat manapun (grup, channel, atau chat sama temenmu).\n2. Ketik username-ku @askcapybot terus lanjutin sama pertanyaanmu (contoh: <code>@askcapybot apa itu fotosintesis</code>).\n3. Tunggu bentar pas aku lagi mikir.\n4. Klik hasilnya buat ngirim jawaban langsung di chat itu."
+  "help_inline_content": "1. Buka chat manapun (grup, channel, atau chat sama temenmu).\n2. Ketik username-ku @askcapybot terus lanjutin sama pertanyaanmu (contoh: <code>@askcapybot apa itu fotosintesis</code>).\n3. Tunggu bentar pas aku lagi mikir.\n4. Klik hasilnya buat ngirim jawaban langsung di chat itu.",
+  "img_prompt_required": "Kamu lupa kasih prompt gambarnya. Contoh: `/img seekor kapibara di luar angkasa`",
+"img_generating": "🎨 Aku lagi siapin kanvas dan catnya... sabar ya, ini butuh waktu agak lama.",
+"img_error_prefix": "Duh, ada masalah: {error}",
+"img_success_caption": "🖼️ Hasil untuk prompt:\n\n<pre>{prompt}</pre>",
+"img_send_error": "Aduh, aku gagal ngirim gambarnya. Mungkin link-nya bermasalah."
 }
