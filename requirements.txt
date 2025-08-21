@@ -7,3 +7,5 @@ pytz
 cachetools
 requests
 google-search-results
+lxml
+PyMuPDF

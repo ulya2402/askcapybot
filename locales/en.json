@@ -9,7 +9,7 @@
     "lang_updated_en": "Language has been updated to English.",
     "lang_updated_id": "Language has been updated to Indonesian.",
     "system_prompt": "You are a helpful assistant, smart and not hallucinating. when responding directly to the point Your response should be concise, use a language style that is easy to understand and concise a maximum of 3000 characters cannot exceed. For responses, please provide a complete answer without any omissions. Keep it concise and within a maximum of 3,000 words. Do not exceed this limit. Your response must be concise and formatted using only Telegram-supported HTML tags: <b>, <i>, <u>, <s>, <code>, <pre>, <blockquote>, <a href='...'>. For all code blocks, you MUST use the format <pre><code class=\"language-python\">...</code></pre>, replacing 'python' with the relevant language. Do not use Markdown backticks (```). Do not use any other tags like <html>, <body>, or <!doctype>.Always respond with neat text formatting so that it is easy to read, and always use formatting such as bold, italics, etc. when necessary.",
-    "api_key_not_configured": "API key for Groq is not configured. Please contact the administrator.",
+    "api_key_not_configured": "API key is not configured. Please contact the administrator.",
     "all_services_busy": "Sorry, all our services are currently busy. Please try again in a moment.",
 "settings_menu": "⚙️ <b>Settings Menu</b>\n\n<b>Your current model:</b> <code>{current_model_name}</code>\n\n<b>Model Info:</b>\n🧠 - Supports AI Reasoning\n👁️ - Supports Image Analysis (Vision)\n\nSelect a model below:",
   "change_model_button": "🤖 Change Model",
@@ -24,7 +24,7 @@
 "max_images_warning": "You sent more than {max_images} images. Only the first {max_images} will be analyzed.",
 "thinking_web_search": "🔎 Searching the web...",
     "sources_title": "\n\n<b>Sources:</b>\n",
-    "group_command_usage": "Please provide a question after the command (e.g., `/ai what is the capital of Indonesia?`) or reply to an image with the command.",
+    "group_command_usage": "Please provide a question after the command (e.g., <code>/ai what is the capital of Indonesia?</code>) or reply to an image with the command.",
 "vision_model_required": "This feature requires a vision-capable model. Please change your model to one with the 👁️ icon using /settings.",
 "inline_result_title": "Get answer for: \"{query}\"",
 "inline_placeholder": "🤖 Processing your request for: \"{query}\"...",
@@ -53,10 +53,8 @@
 "help_basic_title": "<b>🤖 Basic Commands</b>\n\nHere are the fundamental commands to manage your interaction with me:",
 "help_basic_content": "• /start - Welcome menu.\n• /newchat - Clears your conversation history to start fresh.\n• /settings - Changes the AI model or sets a custom system prompt.\n• /status - Checks your daily message usage limit.\n• /lang - Changes the bot's language.",
 "help_ai_title": "<b>🧠 AI Features</b>\n\nExplore my core AI capabilities:",
-"help_ai_content": "• <b>Standard Chat</b>: Simply send any text message to start a conversation. The AI will respond based on its knowledge and your chat history.\n\n• <b>🖼️ Image Analysis (Vision)</b>: Send a photo (or multiple photos in an album) with a caption. The AI will analyze and describe what's in the image. Requires a Vision-capable model (👁️).\n\n• <b>🌐 Web Search (RAG)</b>: Use `/web` or `/i` followed by your question (e.g., `/web latest tech news`). I will search the internet, read the top results, and provide a summarized, factual answer with sources.",
+"help_ai_content": "• <b>Standard Chat</b>: Simply send any text message to start a conversation. The AI will respond based on its knowledge and your chat history.\n\n• <b>🖼️ Image Analysis (Vision)</b>: Send a photo (or multiple photos in an album) with a caption. The AI will analyze and describe what's in the image. Requires a Vision-capable model (👁️).\n\n• <b>🌐 Web Search (RAG)</b>: Use /web or /i followed by your question (e.g., /web latest tech news). I will search the internet, read the top results, and provide a summarized, factual answer with sources.",
 "help_inline_title": "<b>💬 Inline Mode</b>\n\nUse my AI capabilities in any chat without adding me!",
-"help_inline_content": "1. Go to any chat (a group, a channel, or a private chat with a friend).\n2. Type my username `@Sunoaibottestbot` followed by your question (e.g., `@Sunoaibottestbot what is photosynthesis`).\n3. Wait a moment for the AI to process.\n4. Tap the result to send the answer directly into the chat."
-
-
+"help_inline_content": "1. Go to any chat (a group, a channel, or a private chat with a friend).\n2. Type my username @askcapybot followed by your question (e.g., <code>@askcapybot what is photosynthesis</code>).\n3. Wait a moment for the AI to process.\n4. Tap the result to send the answer directly into the chat."
   }
   

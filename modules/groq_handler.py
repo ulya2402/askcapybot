@@ -2,6 +2,7 @@ import os
 import itertools
 import json
 import requests
+import fitz 
 from bs4 import BeautifulSoup
 from groq import AsyncGroq, RateLimitError
 from serpapi import GoogleSearch
@@ -30,24 +31,38 @@ def load_models_config():
 models_config = load_models_config()
 
 def scrape_url_content(url: str) -> str:
+    """
+    Mengambil konten dari URL, mendukung HTML dan PDF.
+    """
     try:
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
-        response = requests.get(url, headers=headers, timeout=10)
+        response = requests.get(url, headers=headers, timeout=15)
         response.raise_for_status()
+
+        content_type = response.headers.get('content-type', '').lower()
+
+        # Jika konten adalah PDF
+        if 'application/pdf' in content_type:
+            with fitz.open(stream=response.content, filetype="pdf") as doc:
+                text = "".join(page.get_text() for page in doc)
+            return text
         
-        soup = BeautifulSoup(response.content, 'html.parser')
+        # Jika konten adalah HTML
+        elif 'text/html' in content_type:
+            soup = BeautifulSoup(response.content, 'lxml')
+            for script_or_style in soup(['script', 'style', 'nav', 'footer', 'header', 'aside']):
+                script_or_style.decompose()
+            return soup.get_text(separator='\n', strip=True)
         
-        for script_or_style in soup(['script', 'style', 'nav', 'footer', 'header']):
-            script_or_style.decompose()
-            
-        text = soup.get_text(separator='\n', strip=True)
-        return text
-    except requests.RequestException as e:
-        print(f"Error fetching URL {url}: {e}")
-        return None
+        # Abaikan tipe konten lain
+        else:
+            print(f"Skipping unsupported content type '{content_type}' for URL {url}")
+            return None
+
     except Exception as e:
         print(f"Error scraping content from {url}: {e}")
         return None
+
 
 async def get_groq_response(user_id: int, user_message: str, supabase_client, translator: Translator, lang_code: str):
     if not groq_api_keys:

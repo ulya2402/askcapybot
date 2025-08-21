@@ -152,8 +152,9 @@ async def handle_lang(event: Message | CallbackQuery, translator: Translator, la
     builder = InlineKeyboardBuilder()
     builder.button(text="English 🇬🇧", callback_data="lang_en")
     builder.button(text="Indonesia 🇮🇩", callback_data="lang_id")
+    builder.button(text="Русский 🇷🇺", callback_data="lang_ru")
     builder.button(text="⬅️ Back", callback_data="back_to_start")
-    builder.adjust(2, 1) # 2 tombol bahasa, 1 tombol back
+    builder.adjust(2, 1) 
     
     lang_text = translator.get_text("lang_select", lang_code)
     
