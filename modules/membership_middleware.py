@@ -17,6 +17,9 @@ class MembershipMiddleware(BaseMiddleware):
         if not isinstance(event, (Message, CallbackQuery)):
             return await handler(event, data)
 
+        if isinstance(event, Message) and (event.new_chat_members or event.left_chat_member):
+            return await handler(event, data)
+
         user: User = data.get("event_from_user")
         bot: Bot = data.get("bot")
         translator: Translator = data.get("translator") # <-- Ambil translator
