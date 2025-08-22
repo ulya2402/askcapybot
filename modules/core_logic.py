@@ -1,5 +1,6 @@
 import base64
 from typing import List, Dict, Any
+import os
 
 from aiogram import Bot
 from aiogram.types import Message
