@@ -64,25 +64,35 @@ def scrape_url_content(url: str) -> str:
         return None
 
 
-async def get_groq_response(user_id: int, user_message: str, supabase_client, translator: Translator, lang_code: str):
+async def get_groq_response(user_id: int, user_message: str, supabase_client, translator: Translator, lang_code: str, business_connection_id: str = None):
     if not groq_api_keys:
         return {"content": translator.get_text("api_key_not_configured", lang_code), "reasoning": None}
+    
+    owner_id_for_settings = user_id
+    if business_connection_id:
+        from modules.supabase_handler import get_business_owner_id
+        owner_id = await get_business_owner_id(supabase_client, business_connection_id)
+        if owner_id:
+            owner_id_for_settings = owner_id
 
-    active_model_id = await get_user_model(supabase_client, user_id)
+    active_model_id = await get_user_model(supabase_client, owner_id_for_settings)
     model_info = models_config.get(active_model_id, {})
     supports_reasoning = model_info.get("reasoning", False)
 
-    api_params = { "temperature": 0.7, "max_tokens": 4096 }
+    api_params = { "temperature": 0.7, "max_tokens": 2000 }
     if supports_reasoning:
         api_params["reasoning_format"] = "raw"
 
     base_system_prompt = translator.get_text("system_prompt", lang_code)
-    custom_prompt = await get_user_prompt(supabase_client, user_id)
+    custom_prompt = await get_user_prompt(supabase_client, owner_id_for_settings)
     final_system_prompt = base_system_prompt
     if custom_prompt:
         final_system_prompt = f"{custom_prompt}\n\n[SYSTEM RULE]:\n{base_system_prompt}"
 
-    conversation_history = await get_user_messages(supabase_client, user_id)
+    conversation_history = await get_user_messages(supabase_client, user_id, business_connection_id)
+    
+    conversation_history = conversation_history[-10:]
+
     messages = [{"role": "system", "content": final_system_prompt}]
     for message in conversation_history:
         messages.append({"role": message['role'], "content": message['content']})
@@ -112,6 +122,8 @@ async def get_groq_response(user_id: int, user_message: str, supabase_client, tr
             continue
     
     return {"content": translator.get_text("all_services_busy", lang_code), "reasoning": None, "sources": []}
+# -------------------------
+
 
 async def get_rag_response(query: str, translator: Translator, lang_code: str):
     if not groq_api_keys or not serpapi_keys:

@@ -33,27 +33,44 @@ async def get_or_create_user(supabase: Client, user_id: int, username: str):
         return None
 
 # ... (fungsi-fungsi lain tetap sama) ...
-async def get_user_messages(supabase: Client, user_id: int):
+async def get_user_messages(supabase: Client, user_id: int, business_connection_id: str = None):
     try:
-        response = supabase.table('messages').select('role, content').eq('user_id', user_id).order('created_at', desc=False).execute()
+        query = supabase.table('messages').select('role, content').eq('user_id', user_id)
+        if business_connection_id:
+            query = query.eq('business_connection_id', business_connection_id)
+        else:
+            query = query.is_('business_connection_id', None)
+        
+        response = query.order('created_at', desc=False).execute()
         return response.data
     except Exception as e:
         print(f"Error fetching messages for user {user_id}: {e}")
         return []
 
-async def save_message(supabase: Client, user_id: int, role: str, content: str, reasoning: str = None):
+async def save_message(supabase: Client, user_id: int, role: str, content: str, business_connection_id: str = None, reasoning: str = None):
     try:
         message_data = {
             'user_id': user_id,
             'role': role,
             'content': content,
-            'reasoning_text': reasoning
+            'reasoning_text': reasoning,
+            'business_connection_id': business_connection_id
         }
         response = supabase.table('messages').insert(message_data).execute()
         if response.data:
             return response.data[0]['id']
     except Exception as e:
         print(f"Error saving message for user {user_id}: {e}")
+    return None
+
+async def get_business_owner_id(supabase: Client, connection_id: str) -> int | None:
+    """Mendapatkan ID pengguna pemilik koneksi bisnis."""
+    try:
+        response = supabase.table('business_connections').select('user_id').eq('id', connection_id).single().execute()
+        if response.data:
+            return response.data.get('user_id')
+    except Exception as e:
+        print(f"Error fetching business owner ID: {e}")
     return None
 
 async def get_reasoning_text(supabase: Client, message_id: str):

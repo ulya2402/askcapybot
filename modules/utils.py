@@ -1,5 +1,6 @@
 import json
 import re
+from aiogram import Bot
 from aiogram.types import Message, InlineKeyboardMarkup
 from aiogram.enums import ParseMode
 from aiogram.exceptions import TelegramBadRequest
@@ -65,4 +66,53 @@ async def send_long_message(message: Message, text: str, parse_mode: str = Parse
                 await message.reply(safe_part, parse_mode=None, reply_markup=current_markup, disable_web_page_preview=True)
             else:
                 await message.answer(safe_part, parse_mode=None, reply_markup=current_markup, disable_web_page_preview=True)
+        await asyncio.sleep(0.5)
+
+async def send_long_business_message(bot: Bot, user_id: int, connection_id: str, text: str, parse_mode: str = ParseMode.HTML):
+    MAX_LENGTH = 3000
+    if len(text) <= MAX_LENGTH:
+        try:
+            await bot.send_message(user_id, text, parse_mode=parse_mode, business_connection_id=connection_id, disable_web_page_preview=True)
+        except TelegramBadRequest:
+            await bot.send_message(user_id, escape_html(text), parse_mode=None, business_connection_id=connection_id, disable_web_page_preview=True)
+        return
+
+    parts, open_tags = [], []
+    while len(text) > 0:
+        if len(text) <= MAX_LENGTH:
+            parts.append(text)
+            break
+
+        safe_max_len = MAX_LENGTH - 100
+        part = text[:safe_max_len]
+
+        last_newline = part.rfind('\n')
+        last_space = part.rfind(' ')
+        
+        # Prioritaskan pemotongan di baris baru, lalu spasi, atau potong paksa jika tidak ada
+        split_pos = last_newline if last_newline != -1 else (last_space if last_space != -1 else safe_max_len)
+        
+        part_to_send = text[:split_pos]
+        
+        for tag_match in re.finditer(r"<(/)?([a-zA-Z0-9_-]+)[^>]*>", part_to_send):
+            is_closing, tag_name = tag_match.groups()
+            tag_name = tag_name.lower()
+            if is_closing:
+                if open_tags and open_tags[-1] == tag_name: open_tags.pop()
+            elif not tag_match.group(0).endswith("/>"):
+                open_tags.append(tag_name)
+        
+        closing_tags = "".join([f"</{tag}>" for tag in reversed(open_tags)])
+        part_to_send += closing_tags
+        parts.append(part_to_send)
+        
+        opening_tags = "".join([f"<{tag}>" for tag in open_tags])
+        text = opening_tags + text[split_pos:].lstrip()
+
+    for part in parts:
+        try:
+            await bot.send_message(user_id, part, parse_mode=parse_mode, business_connection_id=connection_id, disable_web_page_preview=True)
+        except TelegramBadRequest:
+            safe_part = escape_html(part)
+            await bot.send_message(user_id, safe_part, parse_mode=None, business_connection_id=connection_id, disable_web_page_preview=True)
         await asyncio.sleep(0.5)

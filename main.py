@@ -19,6 +19,8 @@ from modules.group_handler import router as group_router # <-- PERUBAHAN: Impor 
 from modules.inline_handler import router as inline_router
 from modules.membership_middleware import MembershipMiddleware # <-- PERUBAHAN 1: Impor baru
 from modules.image_generator import router as image_router # <-- PERUBAHAN 1: Impor baru
+from modules.business_handler import router as business_router # <-- Impor baru
+
 
 
 
@@ -72,6 +74,7 @@ async def main():
     dp.include_router(inline_router)
     dp.include_router(group_router) 
     dp.include_router(image_router) # <-- PERUBAHAN 2: Daftarkan router gambar
+    dp.include_router(business_router) # <-- Daftarkan router bisnis
 
 
 

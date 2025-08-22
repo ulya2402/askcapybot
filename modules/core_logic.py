@@ -1,5 +1,3 @@
-import os
-import asyncio
 import base64
 from typing import List, Dict, Any
 
@@ -9,8 +7,8 @@ from supabase import Client
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from modules.groq_handler import get_groq_response, get_groq_vision_response
-from modules.utils import send_long_message, load_models
-from modules.supabase_handler import save_message, get_user_model, get_user_prompt
+from modules.utils import send_long_message, load_models, send_long_business_message
+from modules.supabase_handler import save_message, get_business_owner_id, get_user_model
 from modules.html_parser import process_telegram_html, escape_html
 from modules.translator import Translator
 from modules.limit_handler import check_and_handle_limit, increment_chat_count
@@ -42,52 +40,63 @@ async def generate_ai_response(user_id: int, text_prompt: str, supabase: Client,
         "sources_found": bool(sources)
     }
 
+async def process_text_message(message: Message, text_prompt: str, supabase: Client, translator: Translator, lang_code: str, is_business: bool = False):
+    user_id = message.chat.id
+    connection_id = message.business_connection_id if is_business else None
 
+    limit_user_id = user_id
+    if is_business:
+        if not connection_id:
+            print("Error: is_business is True but business_connection_id is missing.")
+            return
+        owner_id = await get_business_owner_id(supabase, connection_id)
+        if not owner_id:
+            print(f"Could not find owner for business connection {connection_id}. Aborting.")
+            return
+        limit_user_id = owner_id
 
-
-async def process_text_message(message: Message, text_prompt: str, supabase: Client, translator: Translator, lang_code: str):
-    user_id = message.from_user.id
-    is_limited = await check_and_handle_limit(supabase, user_id)
+    is_limited = await check_and_handle_limit(supabase, limit_user_id)
     if is_limited:
-        try: limit = int(os.environ.get("DAILY_CHAT_LIMIT", 20))
-        except (ValueError, TypeError): limit = 20
-        await message.answer(translator.get_text("limit_reached", lang_code).format(limit=limit))
+        limit_text = translator.get_text("limit_reached", lang_code).format(limit=os.getenv("DAILY_CHAT_LIMIT", 20))
+        if is_business:
+            await message.bot.send_message(user_id, limit_text, business_connection_id=connection_id)
+        else:
+            await message.answer(limit_text)
         return
 
-    await save_message(supabase, user_id, 'user', text_prompt)
-    sent_message = await message.reply(translator.get_text("thinking", lang_code))
-    
     try:
-        response_data = await generate_ai_response(user_id, text_prompt, supabase, translator, lang_code)
-        
-        if response_data.get("sources_found"):
-            await sent_message.edit_text(translator.get_text("thinking_web_search", lang_code))
+        response_data = await get_groq_response(user_id, text_prompt, supabase, translator, lang_code, connection_id)
+        full_response = response_data.get("content", "")
 
-        final_text = response_data["final_text"]
-        original_content = response_data["original_content"] 
-        reasoning_text = response_data["reasoning"]
-
-        await sent_message.delete()
-
-        if final_text and final_text.strip():
-            # We need the original full response for saving, not the parsed one
-            message_id = await save_message(supabase, user_id, 'assistant', original_content, reasoning_text)
+        if full_response and full_response.strip():
+            await save_message(supabase, user_id, 'assistant', full_response, connection_id)
+            parsed_response = process_telegram_html(full_response)
             
-            reply_markup = None
-            if reasoning_text and message_id:
-                builder = InlineKeyboardBuilder()
-                builder.button(text=translator.get_text("show_reasoning_button", lang_code), callback_data=f"show_reasoning_{message_id}")
-                reply_markup = builder.as_markup()
+            if is_business:
+                await send_long_business_message(message.bot, user_id, connection_id, parsed_response)
+            else:
+                # --- PERUBAIKAN ---
+                await send_long_message(message, parsed_response)
             
-            await send_long_message(message, final_text, reply_markup=reply_markup)
-            await increment_chat_count(supabase, user_id)
+            await increment_chat_count(supabase, limit_user_id)
         else:
-            await message.reply(translator.get_text("no_response", lang_code))
+            error_text = translator.get_text("no_response", lang_code)
+            if is_business:
+                await message.bot.send_message(user_id, error_text, business_connection_id=connection_id)
+            else:
+                await message.answer(error_text)
             
     except Exception as e:
         print(f"Error in process_text_message: {e}")
-        try: await sent_message.edit_text(translator.get_text("stream_error", lang_code))
-        except Exception: await message.reply(translator.get_text("stream_error", lang_code))
+        error_text = translator.get_text("stream_error", lang_code)
+        try:
+            if is_business:
+                await message.bot.send_message(user_id, error_text, business_connection_id=connection_id)
+            else:
+                await message.answer(error_text)
+        except Exception as final_e:
+            # --- PERBAIKAN TYPO ---
+            print(f"Failed to send final error message: {final_e}")
 
 
 async def process_photo_message(message: Message, photo_messages: List[Message], prompt_text: str, bot: Bot, supabase: Client, translator: Translator, lang_code: str):
